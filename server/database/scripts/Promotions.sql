@@ -1,0 +1,23 @@
+-- SneakRush - Promotions.sql
+-- 20 promotions de test (10 % et 10 fixes)
+
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO01P', 'Réduction 6% sur une sélection', 'percent', 6, '2025-08-04 00:00:00', '2025-10-03 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO02P', 'Réduction 7% sur une sélection', 'percent', 7, '2025-07-25 00:00:00', '2025-09-23 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO03P', 'Réduction 8% sur une sélection', 'percent', 8, '2025-07-15 00:00:00', '2025-09-13 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO04P', 'Réduction 9% sur une sélection', 'percent', 9, '2025-07-05 00:00:00', '2025-09-03 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO05P', 'Réduction 10% sur une sélection', 'percent', 10, '2025-06-25 00:00:00', '2025-08-24 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO06P', 'Réduction 11% sur une sélection', 'percent', 11, '2025-06-15 00:00:00', '2025-08-14 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO07P', 'Réduction 12% sur une sélection', 'percent', 12, '2025-06-05 00:00:00', '2025-08-04 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO08P', 'Réduction 13% sur une sélection', 'percent', 13, '2025-05-26 00:00:00', '2025-07-25 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO09P', 'Réduction 14% sur une sélection', 'percent', 14, '2025-05-16 00:00:00', '2025-07-15 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO10P', 'Réduction 15% sur une sélection', 'percent', 15, '2025-05-06 00:00:00', '2025-07-05 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO01F', '-12 USD sur tout le site', 'fixed', 12, '2025-08-02 00:00:00', '2025-09-16 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO02F', '-14 USD sur tout le site', 'fixed', 14, '2025-07-21 00:00:00', '2025-09-04 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO03F', '-16 USD sur tout le site', 'fixed', 16, '2025-07-09 00:00:00', '2025-08-23 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO04F', '-18 USD sur tout le site', 'fixed', 18, '2025-06-27 00:00:00', '2025-08-11 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO05F', '-20 USD sur tout le site', 'fixed', 20, '2025-06-15 00:00:00', '2025-07-30 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO06F', '-22 USD sur tout le site', 'fixed', 22, '2025-06-03 00:00:00', '2025-07-18 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO07F', '-24 USD sur tout le site', 'fixed', 24, '2025-05-22 00:00:00', '2025-07-06 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO08F', '-26 USD sur tout le site', 'fixed', 26, '2025-05-10 00:00:00', '2025-06-24 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO09F', '-28 USD sur tout le site', 'fixed', 28, '2025-04-28 00:00:00', '2025-06-12 00:00:00', 1);
+INSERT INTO promotions (code, description, discount_type, discount_value, start_date, end_date, is_active) VALUES ('PROMO10F', '-30 USD sur tout le site', 'fixed', 30, '2025-04-16 00:00:00', '2025-05-31 00:00:00', 1);
