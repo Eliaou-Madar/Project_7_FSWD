@@ -7,3 +7,7 @@
 #### Run It
 
 (in the terminal of the server) npm start
+
+###### Password for all user for demo : 
+
+SR!Temp2025

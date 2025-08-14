@@ -1,0 +1,7 @@
+.auth-page { padding: 24px; display: grid; place-items: center; }
+.register-form { width: 100%; max-width: 380px; display: grid; gap: 10px; }
+.register-form form { display: grid; gap: 8px; }
+.error { color: crimson; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: grid; place-items: center; }
+.modal { background: #fff; padding: 20px; border-radius: 12px; width: min(560px, 92vw); display: grid; gap: 10px; }
+.modal-buttons { display: flex; gap: 8px; justify-content: flex-end; }

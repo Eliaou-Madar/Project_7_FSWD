@@ -1,0 +1,19 @@
+/* src/components/Layout/Header.css */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: #111;
+  color: white;
+}
+
+.header a {
+  color: white;
+  text-decoration: none;
+  margin: 0 0.5rem;
+}
+
+.header a:hover {
+  text-decoration: underline;
+}

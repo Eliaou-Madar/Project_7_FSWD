@@ -108,6 +108,23 @@ CREATE TABLE reviews (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+
+CREATE TABLE IF NOT EXISTS user_profiles (
+  user_id INT PRIMARY KEY,
+  full_name VARCHAR(255),
+  phone VARCHAR(32),
+  street VARCHAR(255),
+  city VARCHAR(120),
+  zipcode VARCHAR(32),
+  country VARCHAR(120),
+  pref_size VARCHAR(16),
+  pref_favorite_brand VARCHAR(120),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_profiles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
 -- Admin par défaut
 INSERT INTO users (username, first_name, last_name, email, password_hash, role)
 VALUES ('admin', 'Admin', 'User', 'admin@sneakrush.com', 'hashed_password_here', 'admin');
