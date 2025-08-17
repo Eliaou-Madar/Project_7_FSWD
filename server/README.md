@@ -10,4 +10,8 @@
 
 ###### Password for all user for demo : 
 
+admin@sneakrush.com
+
+jdoe1@example.com
+
 SR!Temp2025

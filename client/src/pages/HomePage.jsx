@@ -8,7 +8,7 @@ export default function HomePage() {
 
   return (
     <div className="app-layout">
-      <Header />
+      
       <div className="content-area">
         <main>
           <h1>
@@ -16,7 +16,7 @@ export default function HomePage() {
               ? `Hello, ${user.firstname || ""} ${user.lastname || ""}!`
               : "Welcome to SneakRush"}
           </h1>
-          <Outlet />
+          
         </main>
       </div>
     </div>

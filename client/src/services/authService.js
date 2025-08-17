@@ -1,10 +1,5 @@
-// src/services/authService.js
-import { VITE_API_BASE_URL } from "../utils/constants";
-
-function getToken() {
-  try { return (JSON.parse(localStorage.getItem("user") || "null")?.token) || null; }
-  catch { return null; }
-}
+import { BASE_URL } from "../data/api";
+import { getItem, setItem } from "../utils/storage";
 
 async function handle(res) {
   let data = null;
@@ -13,36 +8,51 @@ async function handle(res) {
   return data;
 }
 
+export function getStoredToken() {
+  try {
+    const user = getItem("user");
+    return user?.token || getItem("token") || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function login(email, password) {
-  const res = await fetch(`${VITE_API_BASE_URL}/api/auth/login`, {
+  const res = await fetch(`${BASE_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  return handle(res);
+  const data = await handle(res);
+  // Attendu: l’API renvoie au moins { token, user } (adapte si différent)
+  if (data?.token) setItem("token", data.token);
+  if (data?.user) setItem("user", data.user);
+  return data;
 }
 
 export async function register(username, first_name, last_name, email, password) {
-  const res = await fetch(`${VITE_API_BASE_URL}/api/auth/register`, {
+  const res = await fetch(`${BASE_URL}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, first_name, last_name, email, password }),
   });
-  return handle(res);
+  const data = await handle(res);
+  // Si ton /register fait aussi un login et renvoie un token, on le stocke
+  if (data?.token) setItem("token", data.token);
+  if (data?.user) setItem("user", data.user);
+  return data;
 }
 
-// UPDATE profil (protégé)
-export async function update(userId, data) {
-  const token = getToken();
-  const res = await fetch(`${VITE_API_BASE_URL}/api/users/${encodeURIComponent(userId)}`, {
+export async function update(userId, payload) {
+  const token = getStoredToken();
+  const res = await fetch(`${BASE_URL}/api/users/${encodeURIComponent(userId)}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
-  const json = await handle(res);
-  // ⬇️ renvoie directement { user, profile }
-  return json?.data || null;
+  const data = await handle(res);
+  return data?.data || null;
 }

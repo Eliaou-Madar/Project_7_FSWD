@@ -1,17 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import CartItem from "../components/Cart/CartItem.jsx";
+import CartItem from "../components/Cart/CartItem";
 
 export default function CartPage() {
-  const { cart, remove, clear } = useCart();
-  const items = cart?.items || [];
-  const total = cart?.total ?? 0;
+  const { items, total, clear, loading, refresh, lastResponse } = useCart();
+  const [showDebug, setShowDebug] = useState(false);
 
   return (
     <div style={{ padding: 16 }}>
       <header style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <h1 style={{ margin: 0 }}>Your Cart</h1>
+        <button onClick={refresh}>Refresh</button>
+        <button onClick={() => setShowDebug(s => !s)}>Debug</button>
         {!!items.length && (
           <button onClick={clear} style={{ marginLeft: "auto" }}>
             Clear cart
@@ -19,7 +20,15 @@ export default function CartPage() {
         )}
       </header>
 
-      {!items.length ? (
+      {showDebug && (
+        <pre style={{ background:"#fafafa", padding:12, borderRadius:8, overflow:"auto", maxHeight:220 }}>
+{JSON.stringify(lastResponse, null, 2)}
+        </pre>
+      )}
+
+      {loading ? (
+        <p style={{ marginTop: 12 }}>Loading…</p>
+      ) : !items.length ? (
         <p style={{ marginTop: 12 }}>
           Your cart is empty. <Link to="/products">Browse products</Link>
         </p>
@@ -27,11 +36,7 @@ export default function CartPage() {
         <>
           <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
             {items.map((i) => (
-              <CartItem
-                key={i.id}
-                item={i}
-                onRemove={() => remove(i.id)}
-              />
+              <CartItem key={i.id} item={i} />
             ))}
           </div>
 
@@ -43,7 +48,7 @@ export default function CartPage() {
               justifyContent: "space-between",
             }}
           >
-            <strong>Total: {total} €</strong>
+            <strong>Total: {total.toFixed(2)} €</strong>
             <Link to="/checkout">
               <button>Proceed to Checkout</button>
             </Link>

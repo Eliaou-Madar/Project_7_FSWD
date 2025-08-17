@@ -1,20 +1,19 @@
-// src/utils/general/tokenUtil.js
 import axios from "axios";
 import { BASE_URL } from "../../data/api";
 import { getItem } from "../storage";
 
-// Récupère un token depuis localStorage
-function getToken() {
-  // soit stocké à part, soit dans l'objet user
+// Récupère un token depuis le storage (token à part OU dans user.token)
+export function getToken() {
   const direct = getItem("token");
-  if (direct) return direct;
+  if (direct) return String(direct).replace(/^Bearer\s+/i, "");
   const user = getItem("user");
-  return user?.token || null;
+  if (user?.token) return String(user.token).replace(/^Bearer\s+/i, "");
+  return null;
 }
 
 /**
- * Requête authentifiée générique
- * @param {string} url - chemin complet OU relatif à BASE_URL
+ * Requête authentifiée générique (axios)
+ * @param {string} url - chemin absolu ou relatif à BASE_URL
  * @param {"get"|"post"|"put"|"patch"|"delete"} method
  * @param {object} [data]
  * @param {object} [config] - axios config additionnel
@@ -25,6 +24,7 @@ export async function authenticatedRequest(url, method = "get", data, config = {
   const fullUrl = isAbsolute ? url : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 
   const headers = {
+    "Content-Type": "application/json",
     ...(config.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
@@ -34,6 +34,7 @@ export async function authenticatedRequest(url, method = "get", data, config = {
     method,
     data,
     headers,
+    withCredentials: false, // inutile en mode Bearer
     ...config,
   });
 }

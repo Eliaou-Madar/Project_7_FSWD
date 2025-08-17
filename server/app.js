@@ -63,6 +63,14 @@ apiRouter.use("/promotions", promotionsRouter);
 apiRouter.use("/", productsSizeRouter);   // GET /products/:productId/sizes, POST /products/:productId/sizes, PUT/DELETE /sizes/:id
 apiRouter.use("/", productsImageRouter);  // GET /products/:productId/images, POST /products/:productId/images, DELETE /images/:id
 
+app.disable("etag");
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  res.removeHeader("Last-Modified");
+  next();
+});
+
+
 app.use("/api", apiRouter);
 
 // 404 → error handler

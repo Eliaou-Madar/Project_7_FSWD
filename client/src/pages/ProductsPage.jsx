@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { productsService } from "../services/products.service";
 import ProductCard from "../components/Products/ProductCard.jsx";
+import DevErrorBoundary from "../components/DevErrorBoundary";
 
 export default function ProductsPage() {
   const [q, setQ] = useState("");
@@ -11,8 +12,11 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const data = await productsService.list(query);
-      setProducts(Array.isArray(data) ? data : []);
-    } catch {
+      if (data !== "__KEEP__") {
+       setProducts(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.error("products list failed:", e); // pour voir si ça replante
       setProducts([]);
     } finally {
       setLoading(false);
@@ -29,6 +33,7 @@ export default function ProductsPage() {
   };
 
   return (
+    <DevErrorBoundary>
     <div style={{ padding: 16 }}>
       <header style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
         <h1 style={{ margin: 0 }}>Products</h1>
@@ -55,10 +60,11 @@ export default function ProductsPage() {
           }}
         >
           {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
+            <ProductCard key={p.id ?? p.product_id ?? p.sku} product={p} />
+           ))}
         </div>
       )}
     </div>
+  </DevErrorBoundary>
   );
 }

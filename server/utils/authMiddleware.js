@@ -1,4 +1,3 @@
-// server/utils/authMiddleware.js
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
@@ -6,25 +5,25 @@ dotenv.config();
 const SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 
 const auth = (req, res, next) => {
-  // Récupère soit via Authorization: Bearer, soit via x-auth-token
-  let token = null;
+  // 1) Cookie
+  let token = req.cookies?.token || null;
 
-  const authHeader = req.headers.authorization || "";
-  if (authHeader.startsWith("Bearer ")) {
-    token = authHeader.slice(7);
-  } else {
-    token = req.header("x-auth-token");
-  }
-
+  // 2) Authorization: Bearer ...
   if (!token) {
-    return res.status(401).json({ message: "No token, authorization denied" });
+    const h = req.headers.authorization || "";
+    if (h.startsWith("Bearer ")) token = h.slice(7);
   }
+
+  // 3) x-auth-token (legacy)
+  if (!token) token = req.header("x-auth-token");
+
+  if (!token) return res.status(401).json({ message: "No token, authorization denied" });
 
   try {
     const decoded = jwt.verify(token, SECRET);
-    req.user = decoded; // Doit contenir au moins { id, role }
-    next();
-  } catch (err) {
+    req.user = decoded; // { id, role, ... }
+    return next();
+  } catch (e) {
     return res.status(401).json({ message: "Token is not valid" });
   }
 };

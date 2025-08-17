@@ -24,11 +24,8 @@ import AdminPromosPage from "./pages/admin/AdminPromosPage.jsx";
 // Guards
 import PrivateRoute from "./components/Auth/PrivateRoute.jsx";
 import AdminRoute from "./components/Admin/AdminRoute.jsx";
+import PrivateAppLayout from "./components/Layout/PrivateAppLayout.jsx";
 
-/** Layout protégé pour /users/:userId/* */
-function UsersLayout() {
-  return <Outlet />;
-}
 
 /** Layout admin imbriqué */
 function AdminLayout() {
@@ -50,7 +47,7 @@ export default function Router() {
         path="/users/:userId/*"
         element={
           <PrivateRoute>
-            <UsersLayout />
+             <PrivateAppLayout />
           </PrivateRoute>
         }
       >
