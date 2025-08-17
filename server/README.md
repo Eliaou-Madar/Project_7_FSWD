@@ -12,6 +12,8 @@
 
 admin@sneakrush.com
 
+admin123
+
 jdoe1@example.com
 
 SR!Temp2025

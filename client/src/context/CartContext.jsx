@@ -1,3 +1,4 @@
+// client/src/context/CartContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { cartService } from "../services/cart.service";
 
@@ -12,41 +13,66 @@ export function CartProvider({ children }) {
 
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
-  // Trouve le vrai payload où se trouvent les items, quelle que soit la profondeur
+  // Trouve le vrai payload quelle que soit la forme de réponse
   const extractPayload = useCallback((res) => {
-    // on tolère res | {data} | {status,data} | {status,message,data}
     const a = res?.data ?? res;
-    // certains renvoient { data: { data: {...} } }
     const b = a?.data ?? a;
-    // les items peuvent être sous b.items, b.cart?.items, b.payload?.items, etc.
-    const payload = b?.items ? b
-                  : b?.cart?.items ? b.cart
-                  : b?.payload?.items ? b.payload
-                  : b;
+    const payload =
+      (b?.items && b) ||
+      (b?.cart?.items && b.cart) ||
+      (b?.payload?.items && b.payload) ||
+      b;
     return payload || {};
   }, []);
 
   const normalize = useCallback((payload) => {
     const rawItems = Array.isArray(payload?.items) ? payload.items : [];
-    const items = rawItems.map((it) => {
-      const qty = Number(it.quantity ?? it.qty ?? 1);
-      const price = Number(it.price ?? it.unit_price ?? it.product?.price ?? 0);
+
+    const items = rawItems.map((it, idx) => {
+      const qty = Number(it.quantity ?? it.qty ?? 1) || 1;
+      const price =
+        Number(it.price ?? it.unit_price ?? it.product?.price) || 0;
+
+      // 🔧 CORRECTION: on récupère l'URL depuis l'item/produit
+      const imageUrl =
+        it.product?.url ??       // si l'API renvoie product:{ url }
+        it.url ??                // si l'item a un champ url
+        it.image_url ??          // fallback éventuel si ancien schéma
+        "";
+
+      const prodId = it.product_id ?? it.product?.id ?? it.id;
+      const sizeId = it.product_size_id ?? it.size_id ?? it.key ?? prodId;
+
+      const name =
+        it.product_name ?? it.product?.name ?? it.name ?? "Product";
+
+      const size =
+        it.size_label ?? it.product?.size_label ?? it.size ?? null;
+
+      const subtotal = price * qty;
+
       return {
-        id: it.product_size_id ?? it.id ?? it.key, // unique (taille)
+        id: sizeId,           // identifiant unique de ligne (taille)
         qty,
-        subtotal: price * qty,
+        subtotal,
         product: {
-          id: it.product_id ?? it.product?.id,
-          name: it.product_name ?? it.product?.name ?? "Product",
+          id: prodId,
+          name,
+          url: imageUrl,      // ✅ on remplit bien product.url
           price,
-          image: it.image_url ?? it.product?.image ?? it.product?.image_url ?? "",
-          size: it.size_label ?? it.product?.size_label ?? it.size ?? null,
+          size,
         },
       };
     });
+
     const total =
       Number(payload.total) ||
       items.reduce((s, i) => s + (Number(i.subtotal) || 0), 0);
+
+    // Logs utiles
+    console.log("[Cart.normalize] items:", items);
+    console.log("[Cart.normalize] total:", total);
+
     return { items, total };
   }, []);
 
@@ -55,13 +81,12 @@ export function CartProvider({ children }) {
     try {
       const res = await cartService.get(); // GET /api/cart
       console.log("[Cart] /api/cart raw ->", res);
-      setLastResponse(res); // pour affichage debug
+      setLastResponse(res);
       const payload = extractPayload(res);
       const mapped = normalize(payload);
       if (mounted.current) setCart(mapped);
     } catch (e) {
       console.error("[Cart] GET /api/cart failed", e);
-      // ne pas écraser le panier sur erreur
     } finally {
       if (mounted.current) setLoading(false);
     }

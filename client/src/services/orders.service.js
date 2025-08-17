@@ -1,43 +1,54 @@
 // src/services/orders.service.js
-import axios from "axios";
 import { BASE_URL } from "../data/api";
 import { authenticatedRequest } from "../utils/general/tokenUtil";
 
-const URL = `${BASE_URL}/orders`;
+/** Join util: évite les doubles // et gère root vide */
+function join(root, path) {
+  const r = (root || "").replace(/\/+$/g, "");       // trim trailing /
+  const p = `/${String(path || "").replace(/^\/+/g, "")}`; // ensure single leading /
+  return `${r}${p}`;
+}
+
+// On force le préfixe /api ici.
+// ⚠️ Donc BASE_URL doit être '' (ou https://ton-domaine) mais PAS '/api'.
+const API_ROOT   = join(BASE_URL, "/api");
+const ADMIN_URL  = join(API_ROOT, "/admin/orders");
+const ORDERS_URL = join(API_ROOT, "/orders");
+
+/** Build querystring from object */
+function qs(params = {}) {
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "");
+  return entries.length ? `?${new URLSearchParams(entries).toString()}` : "";
+}
 
 export const ordersService = {
-  /**
-   * Récupère toutes les commandes (admin)
-   */
-  async getAll() {
-    return authenticatedRequest(URL, "get");
+  /** ADMIN — liste paginée/filtrée */
+  async getAll(params = {}) {
+    return authenticatedRequest(`${ADMIN_URL}${qs(params)}`, "get");
   },
 
-  /**
-   * Récupère une commande par ID (admin ou client si autorisé)
-   */
+  /** Alias .list() pour compat */
+  async list(params = {}) {
+    return this.getAll(params);
+  },
+
+  /** ADMIN — détail par ID */
   async getById(id) {
-    return authenticatedRequest(`${URL}/${id}`, "get");
+    return authenticatedRequest(join(ADMIN_URL, `/${id}`), "get");
   },
 
-  /**
-   * Met à jour le statut d'une commande (admin)
-   */
+  /** ADMIN — MAJ statut */
   async updateStatus(id, status) {
-    return authenticatedRequest(`${URL}/${id}`, "put", { status });
+    return authenticatedRequest(join(ADMIN_URL, `/${id}`), "patch", { status });
   },
 
-  /**
-   * Supprime une commande (admin)
-   */
+  /** ADMIN — annulation/suppression */
   async remove(id) {
-    return authenticatedRequest(`${URL}/${id}`, "delete");
+    return authenticatedRequest(join(ADMIN_URL, `/${id}`), "delete");
   },
 
-  /**
-   * Crée une commande (client)
-   */
+  /** CLIENT — création d’une commande (depuis panier) */
   async create(orderData) {
-    return authenticatedRequest(URL, "post", orderData);
+    return authenticatedRequest(ORDERS_URL, "post", orderData);
   },
 };

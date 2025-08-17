@@ -1,32 +1,34 @@
-import React, { useEffect, useState } from "react";
+// client/src/pages/ProductDetailPage.jsx
 import { useParams } from "react-router-dom";
-import { productsService } from "../services/products.service";
+import { useEffect, useState } from "react";
 import ProductDetail from "../components/Products/ProductDetail.jsx";
+import { productsService } from "../services/products.service";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [state, setState] = useState({ loading: true, error: "" });
+  const [err, setErr] = useState("");
 
   useEffect(() => {
-    let alive = true;
-    const run = async () => {
-      setState({ loading: true, error: "" });
-      try {
-        const data = await productsService.get(id);
-        if (alive) setProduct(data);
-      } catch {
-        if (alive) setState({ loading: false, error: "Product not found" });
-      } finally {
-        if (alive) setState((s) => ({ ...s, loading: false }));
-      }
+    let ignore = false;
+    setErr("");
+    setProduct(null);
+
+    productsService
+      .getById(id)
+      .then((p) => {
+        if (!ignore) setProduct(p);
+      })
+      .catch((e) => {
+        if (!ignore) setErr(String(e.message || e));
+      });
+
+    return () => {
+      ignore = true;
     };
-    if (id) run();
-    return () => { alive = false; };
   }, [id]);
 
-  if (state.loading) return <p style={{ padding: 16 }}>Loading…</p>;
-  if (state.error || !product) return <p style={{ padding: 16 }}>{state.error || "Error"}</p>;
-
+  if (err) return <div style={{ color: "crimson" }}>Erreur: {err}</div>;
+  if (!product) return <div>Loading…</div>;
   return <ProductDetail product={product} />;
 }

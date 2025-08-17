@@ -1,4 +1,3 @@
--- SneakRush - Base minimale MySQL avec promotions
 USE sneakrush_db;
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -15,23 +14,16 @@ CREATE TABLE users (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Produits
+-- Produits (avec url)
 CREATE TABLE products (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   brand VARCHAR(100),
   description TEXT,
+  url VARCHAR(500) NOT NULL,
   price DECIMAL(10,2) NOT NULL,
   is_limited BOOLEAN DEFAULT FALSE,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Images produits
-CREATE TABLE product_images (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  product_id INT NOT NULL,
-  url VARCHAR(500) NOT NULL,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tailles & stock
@@ -108,8 +100,7 @@ CREATE TABLE reviews (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
-
+-- Profils
 CREATE TABLE IF NOT EXISTS user_profiles (
   user_id INT PRIMARY KEY,
   full_name VARCHAR(255),
@@ -123,7 +114,6 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_profiles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 
 -- Admin par défaut
 INSERT INTO users (username, first_name, last_name, email, password_hash, role)

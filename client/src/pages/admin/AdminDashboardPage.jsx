@@ -15,13 +15,14 @@ export default function AdminDashboardPage() {
           marginTop: 12,
         }}
       >
-        <Link to="/admin/products" className="card-link">
+        {/* IMPORTANT: liens vers des routes sœurs → on remonte d’un niveau */}
+        <Link to="../products" relative="path" className="card-link">
           <div className="card" style={cardStyle}>Products</div>
         </Link>
-        <Link to="/admin/orders" className="card-link">
+        <Link to="../orders" relative="path" className="card-link">
           <div className="card" style={cardStyle}>Orders</div>
         </Link>
-        <Link to="/admin/promos" className="card-link">
+        <Link to="../promos" relative="path" className="card-link">
           <div className="card" style={cardStyle}>Promotions</div>
         </Link>
       </div>

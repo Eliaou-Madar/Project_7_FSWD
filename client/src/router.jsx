@@ -16,7 +16,7 @@ import AccountPage from "./pages/AccountPage.jsx";
 import OrdersPage from "./pages/OrdersPage.jsx";
 
 // Admin
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
+import AdminLayout from "./components/admin/AdminLayout.jsx";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage.jsx";
 import AdminProductsPage from "./pages/admin/AdminProductsPage.jsx";
 import AdminPromosPage from "./pages/admin/AdminPromosPage.jsx";
@@ -27,10 +27,7 @@ import AdminRoute from "./components/Admin/AdminRoute.jsx";
 import PrivateAppLayout from "./components/Layout/PrivateAppLayout.jsx";
 
 
-/** Layout admin imbriqué */
-function AdminLayout() {
-  return <Outlet />;
-}
+
 
 export default function Router() {
   return (
@@ -41,6 +38,9 @@ export default function Router() {
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/products" element={<ProductsPage />} />
+      <Route path="/products/:id" element={<ProductDetailPage />} />
+
 
       {/* Espace protégé, préfixe users/:userId/* */}
       <Route
@@ -55,7 +55,6 @@ export default function Router() {
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<HomePage />} />
         <Route path="products" element={<ProductsPage />} />
-        <Route path="products/:productId" element={<ProductDetailPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="account" element={<AccountPage />} />
@@ -74,8 +73,6 @@ export default function Router() {
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="promos" element={<AdminPromosPage />} />
-          {/* Optionnel: dashboard dédié */}
-          <Route path="dashboard" element={<AdminDashboardPage />} />
         </Route>
       </Route>
 

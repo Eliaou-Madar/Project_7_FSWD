@@ -13,7 +13,7 @@ export default function HomePage() {
         <main>
           <h1>
             {user
-              ? `Hello, ${user.firstname || ""} ${user.lastname || ""}!`
+              ? `Hello, ${user.first_name || ""} ${user.last_name || ""}!`
               : "Welcome to SneakRush"}
           </h1>
           

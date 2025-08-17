@@ -1,118 +1,150 @@
 // server/models/promotionModel.js
 import db from "../database/connection.js";
 
-/* ------------------ READ ------------------ */
+/**
+ * On renvoie les colonnes RÉELLES (code, discount_type, discount_value, …)
+ * + des ALIAS de compatibilité (title, discount_percent) pour tout ancien code.
+ */
+const BASE_SELECT = `
+  SELECT
+    id,
+    code,
+    code AS title,                       -- alias compat
+    description,
+    discount_type,
+    discount_value,
+    discount_value AS discount_percent,  -- alias compat
+    start_date,
+    end_date,
+    is_active,
+    created_at
+  FROM promotions
+`;
 
-/** Liste des promotions actives (en cours) */
+/** Promos actives */
 export async function getActivePromotions() {
-  const [rows] = await db.query(
-    `SELECT id, title, description, discount_percent, start_date, end_date, created_at
-     FROM promotions
-     WHERE NOW() BETWEEN start_date AND end_date
-     ORDER BY start_date ASC`
-  );
+  const SQL = `
+    ${BASE_SELECT}
+    WHERE is_active = 1
+      AND (start_date IS NULL OR start_date <= NOW())
+      AND (end_date   IS NULL OR end_date   >= NOW())
+    ORDER BY created_at DESC
+  `;
+  const [rows] = await db.query(SQL);
   return rows;
 }
 
-/** Liste paginée/totale */
+/** Liste admin paginée + tri */
 export async function listPromotions({ limit = 20, offset = 0, sort = "newest" } = {}) {
   let orderBy = "created_at DESC";
-  if (sort === "start_date") orderBy = "start_date ASC";
-  if (sort === "end_date") orderBy = "end_date DESC";
+  if (sort === "start_date") orderBy = "start_date DESC";
+  else if (sort === "end_date") orderBy = "end_date DESC";
 
-  const [rows] = await db.query(
-    `SELECT id, title, description, discount_percent, start_date, end_date, created_at
-     FROM promotions
-     ORDER BY ${orderBy}
-     LIMIT ? OFFSET ?`,
-    [Number(limit), Number(offset)]
-  );
+  const SQL = `
+    ${BASE_SELECT}
+    ORDER BY ${orderBy}
+    LIMIT ? OFFSET ?
+  `;
+  const [rows] = await db.query(SQL, [Number(limit), Number(offset)]);
   return rows;
 }
 
-/** Détail d’une promotion par ID */
+/** Détail */
 export async function getPromotionById(id) {
-  const [rows] = await db.query(
-    `SELECT id, title, description, discount_percent, start_date, end_date, created_at
-     FROM promotions
-     WHERE id = ?`,
-    [id]
-  );
-  return rows[0] || null;
+  const SQL = `
+    ${BASE_SELECT}
+    WHERE id = ?
+    LIMIT 1
+  `;
+  const [[row]] = await db.query(SQL, [Number(id)]);
+  return row || null;
 }
 
-/** Vérifie si un produit a une promo active (si tu ajoutes table de liaison plus tard) */
-export async function getPromotionForProduct(productId) {
-  const [rows] = await db.query(
-    `SELECT p.*
-     FROM promotions p
-     JOIN product_promotions pp ON pp.promotion_id = p.id
-     WHERE pp.product_id = ?
-       AND NOW() BETWEEN p.start_date AND p.end_date
-     LIMIT 1`,
-    [productId]
-  );
-  return rows[0] || null;
+/** Pas de liaison produit↔promo dans ton schéma → null */
+export async function getPromotionForProduct(_productId) {
+  return null;
 }
 
-/* ------------------ WRITE ------------------ */
-
-/** Créer une promotion */
-export async function createPromotion({ title, description = "", discount_percent, start_date, end_date }) {
-  const [res] = await db.query(
-    `INSERT INTO promotions (title, description, discount_percent, start_date, end_date)
-     VALUES (?, ?, ?, ?, ?)`,
-    [title, description, discount_percent, start_date, end_date]
+/** Création (colonnes RÉELLES) */
+export async function createPromotion({
+  code,
+  description = null,
+  discount_type,
+  discount_value,
+  start_date = null,
+  end_date = null,
+  is_active = true,
+}) {
+  const [r] = await db.query(
+    `INSERT INTO promotions
+      (code, description, discount_type, discount_value, start_date, end_date, is_active)
+     VALUES (UPPER(?), ?, ?, ?, ?, ?, ?)`,
+    [
+      code,
+      description,
+      discount_type,
+      Number(discount_value),
+      start_date,
+      end_date,
+      !!is_active,
+    ]
   );
-  return { id: res.insertId };
+  return { id: r.insertId };
 }
 
-/** Mettre à jour une promotion */
-export async function updatePromotion(id, { title, description, discount_percent, start_date, end_date }) {
-  const sets = [];
+/** Mise à jour (colonnes RÉELLES) */
+export async function updatePromotion(id, payload = {}) {
+  const allowed = [
+    "code",
+    "description",
+    "discount_type",
+    "discount_value",
+    "start_date",
+    "end_date",
+    "is_active",
+  ];
+
+  const fields = [];
   const params = [];
 
-  if (title !== undefined) {
-    sets.push("title = ?");
-    params.push(title);
-  }
-  if (description !== undefined) {
-    sets.push("description = ?");
-    params.push(description);
-  }
-  if (discount_percent !== undefined) {
-    sets.push("discount_percent = ?");
-    params.push(discount_percent);
-  }
-  if (start_date !== undefined) {
-    sets.push("start_date = ?");
-    params.push(start_date);
-  }
-  if (end_date !== undefined) {
-    sets.push("end_date = ?");
-    params.push(end_date);
+  for (const k of allowed) {
+    if (payload[k] !== undefined) {
+      if (k === "code") {
+        fields.push("code = UPPER(?)");
+        params.push(payload[k]);
+      } else if (k === "discount_value") {
+        fields.push("discount_value = ?");
+        params.push(Number(payload[k]));
+      } else if (k === "is_active") {
+        fields.push("is_active = ?");
+        params.push(!!payload[k]);
+      } else {
+        fields.push(`${k} = ?`);
+        params.push(payload[k]);
+      }
+    }
   }
 
-  if (!sets.length) return { affectedRows: 0 };
+  if (!fields.length) return { affectedRows: 0 };
 
-  params.push(id);
-  const [res] = await db.query(
-    `UPDATE promotions SET ${sets.join(", ")} WHERE id = ?`,
+  params.push(Number(id));
+  const [r] = await db.query(
+    `UPDATE promotions SET ${fields.join(", ")} WHERE id = ?`,
     params
   );
-  return { affectedRows: res.affectedRows };
+  return { affectedRows: r.affectedRows };
 }
 
-/** Supprimer une promotion */
+/** Suppression */
 export async function deletePromotion(id) {
-  const [res] = await db.query(`DELETE FROM promotions WHERE id = ?`, [id]);
-  return { affectedRows: res.affectedRows };
+  const [r] = await db.query(`DELETE FROM promotions WHERE id = ?`, [Number(id)]);
+  return { affectedRows: r.affectedRows };
 }
 
-/** Supprimer toutes les promotions expirées */
+/** Supprimer les expirées */
 export async function deleteExpiredPromotions() {
-  const [res] = await db.query(
-    `DELETE FROM promotions WHERE end_date < NOW()`
+  const [r] = await db.query(
+    `DELETE FROM promotions WHERE end_date IS NOT NULL AND end_date < NOW()`
   );
-  return { affectedRows: res.affectedRows };
+  return { affectedRows: r.affectedRows };
 }

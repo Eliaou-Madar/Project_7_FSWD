@@ -57,7 +57,17 @@ apiRouter.use("/products", productsRouter);
 apiRouter.use("/cart", cartsRouter);
 apiRouter.use("/orders", ordersRouter);
 apiRouter.use("/reviews", reviewsRouter);
+
 apiRouter.use("/promotions", promotionsRouter);
+import adminOrdersRouter from "./routes/admin.orders.js";
+app.use(
+  "/api/admin",
+  (req, _res, next) => {
+    console.log("[admin] hit:", req.method, req.originalUrl);
+    next();
+  },
+  adminOrdersRouter
+);
 
 // Routes tailles & images produits (exposées sous /api)
 apiRouter.use("/", productsSizeRouter);   // GET /products/:productId/sizes, POST /products/:productId/sizes, PUT/DELETE /sizes/:id
@@ -72,6 +82,7 @@ app.use((req, res, next) => {
 
 
 app.use("/api", apiRouter);
+app.use("/api", productsImageRouter);
 
 // 404 → error handler
 app.use((req, res, next) => {

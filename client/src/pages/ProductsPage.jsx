@@ -60,7 +60,7 @@ export default function ProductsPage() {
           }}
         >
           {products.map((p) => (
-            <ProductCard key={p.id ?? p.product_id ?? p.sku} product={p} />
+            <ProductCard key={p.id} product={p} />
            ))}
         </div>
       )}

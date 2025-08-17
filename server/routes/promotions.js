@@ -1,11 +1,12 @@
 // server/routes/promotions.js
 import { Router } from "express";
+import db from "../database/connection.js";
 import auth from "../utils/authMiddleware.js";
 import adminOnly from "../utils/adminMiddleware.js";
 
 import {
+  // on garde UNIQUEMENT les méthodes du modèle qui n'ont pas posé souci
   getActivePromotions,
-  listPromotions,
   getPromotionById,
   getPromotionForProduct,
   createPromotion,
@@ -17,13 +18,11 @@ import {
 const router = Router();
 const isInt = (v) => /^\d+$/.test(String(v));
 
-/* ======================= Public ======================= */
+console.log("[promotions] router loaded"); // DEBUG
 
-/**
- * @desc Liste des promotions actives (NOW() entre start_date et end_date)
- * @route GET /promotions/active
- * @access Public
- */
+/* ========= Public ========= */
+
+// GET /promotions/active
 router.get("/active", async (_req, res) => {
   try {
     const rows = await getActivePromotions();
@@ -34,11 +33,7 @@ router.get("/active", async (_req, res) => {
   }
 });
 
-/**
- * @desc (Optionnel) Promo active pour un produit (si table de liaison existe)
- * @route GET /promotions/product/:productId
- * @access Public
- */
+// GET /promotions/product/:productId (optionnel)
 router.get("/product/:productId", async (req, res) => {
   const { productId } = req.params;
   if (!isInt(productId)) return res.status(400).json({ message: "Invalid productId" });
@@ -52,22 +47,35 @@ router.get("/product/:productId", async (req, res) => {
   }
 });
 
-/* ======================= Admin ======================= */
+/* ========= Admin ========= */
 
-/**
- * @desc Liste paginée de toutes les promotions
- * @route GET /promotions
- * @query limit?, offset?, sort? = newest|start_date|end_date
- * @access Admin
- */
+// GET /promotions  (ADMIN)  — HOTFIX: requête directe **sans** passer par le model
 router.get("/", auth, adminOnly, async (req, res) => {
   try {
     const { limit = 20, offset = 0, sort = "newest" } = req.query;
-    const rows = await listPromotions({
-      limit: Number(limit),
-      offset: Number(offset),
-      sort,
-    });
+    let orderBy = "created_at DESC";
+    if (sort === "start_date") orderBy = "start_date DESC";
+    else if (sort === "end_date") orderBy = "end_date DESC";
+
+    const SQL = `
+      SELECT
+        id,
+        code,
+        code AS title,                       -- alias compat
+        description,
+        discount_type,
+        discount_value,
+        discount_value AS discount_percent,  -- alias compat
+        start_date,
+        end_date,
+        is_active,
+        created_at
+      FROM promotions
+      ORDER BY ${orderBy}
+      LIMIT ? OFFSET ?
+    `;
+    console.log("[promotions] HOTFIX LIST route in use"); // DEBUG
+    const [rows] = await db.query(SQL, [Number(limit), Number(offset)]);
     res.json({ status: 200, message: "Promotions found", data: rows });
   } catch (e) {
     console.error(e);
@@ -75,11 +83,7 @@ router.get("/", auth, adminOnly, async (req, res) => {
   }
 });
 
-/**
- * @desc Détail d’une promotion
- * @route GET /promotions/:id
- * @access Admin
- */
+// GET /promotions/:id (admin)
 router.get("/:id", auth, adminOnly, async (req, res) => {
   const { id } = req.params;
   if (!isInt(id)) return res.status(400).json({ message: "Invalid id" });
@@ -93,24 +97,39 @@ router.get("/:id", auth, adminOnly, async (req, res) => {
   }
 });
 
-/**
- * @desc Créer une promotion
- * @route POST /promotions
- * @body { title, description?, discount_percent, start_date, end_date }
- * @access Admin
- */
+// POST /promotions (admin)
 router.post("/", auth, adminOnly, async (req, res) => {
   try {
-    const { title, description = "", discount_percent, start_date, end_date } = req.body || {};
-    if (!title || discount_percent === undefined || !start_date || !end_date) {
-      return res.status(400).json({ message: "title, discount_percent, start_date, end_date are required" });
+    const {
+      code,
+      discount_type,
+      discount_value,
+      description = null,
+      start_date = null,
+      end_date = null,
+      is_active = true,
+    } = req.body || {};
+
+    if (!code || !discount_type || discount_value === undefined) {
+      return res.status(400).json({ message: "code, discount_type, discount_value are required" });
     }
-    const pct = Number(discount_percent);
-    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
-      return res.status(400).json({ message: "discount_percent must be a number between 0 and 100" });
+    if (!["percent", "fixed"].includes(discount_type)) {
+      return res.status(400).json({ message: "discount_type must be 'percent' or 'fixed'" });
+    }
+    const val = Number(discount_value);
+    if (Number.isNaN(val) || val < 0) {
+      return res.status(400).json({ message: "discount_value must be a positive number" });
     }
 
-    const created = await createPromotion({ title, description, discount_percent: pct, start_date, end_date });
+    const created = await createPromotion({
+      code,
+      description,
+      discount_type,
+      discount_value: val,
+      start_date,
+      end_date,
+      is_active,
+    });
     res.status(201).json({ message: "Promotion created", data: created });
   } catch (e) {
     console.error(e);
@@ -118,36 +137,24 @@ router.post("/", auth, adminOnly, async (req, res) => {
   }
 });
 
-/**
- * @desc Mettre à jour une promotion
- * @route PUT /promotions/:id
- * @body { title?, description?, discount_percent?, start_date?, end_date? }
- * @access Admin
- */
+// PUT /promotions/:id (admin)
 router.put("/:id", auth, adminOnly, async (req, res) => {
   const { id } = req.params;
   if (!isInt(id)) return res.status(400).json({ message: "Invalid id" });
 
-  const { title, description, discount_percent, start_date, end_date } = req.body || {};
-  const payload = {};
-  if (title !== undefined) payload.title = title;
-  if (description !== undefined) payload.description = description;
-  if (discount_percent !== undefined) {
-    const pct = Number(discount_percent);
-    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
-      return res.status(400).json({ message: "discount_percent must be a number between 0 and 100" });
-    }
-    payload.discount_percent = pct;
+  const up = req.body || {};
+  if (up.discount_type && !["percent", "fixed"].includes(up.discount_type)) {
+    return res.status(400).json({ message: "discount_type must be 'percent' or 'fixed'" });
   }
-  if (start_date !== undefined) payload.start_date = start_date;
-  if (end_date !== undefined) payload.end_date = end_date;
-
-  if (Object.keys(payload).length === 0) {
-    return res.status(400).json({ message: "No fields to update" });
+  if (up.discount_value !== undefined) {
+    const val = Number(up.discount_value);
+    if (Number.isNaN(val) || val < 0) {
+      return res.status(400).json({ message: "discount_value must be a positive number" });
+    }
   }
 
   try {
-    const r = await updatePromotion(Number(id), payload);
+    const r = await updatePromotion(Number(id), up);
     if (r.affectedRows === 0) return res.status(404).json({ message: "Promotion not found or unchanged" });
     res.json({ status: 200, message: `Promotion ${id} updated`, data: r });
   } catch (e) {
@@ -156,11 +163,7 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
   }
 });
 
-/**
- * @desc Supprimer une promotion
- * @route DELETE /promotions/:id
- * @access Admin
- */
+// DELETE /promotions/:id (admin)
 router.delete("/:id", auth, adminOnly, async (req, res) => {
   const { id } = req.params;
   if (!isInt(id)) return res.status(400).json({ message: "Invalid id" });
@@ -174,11 +177,7 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
   }
 });
 
-/**
- * @desc Supprimer toutes les promotions expirées (end_date < NOW())
- * @route DELETE /promotions/expired
- * @access Admin
- */
+// DELETE /promotions/expired (admin)
 router.delete("/expired", auth, adminOnly, async (_req, res) => {
   try {
     const r = await deleteExpiredPromotions();
