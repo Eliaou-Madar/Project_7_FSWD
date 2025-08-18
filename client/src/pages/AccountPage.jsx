@@ -1,25 +1,104 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
+import { userProfilesService } from "../services/userProfiles.service";
 import ProfileForm from "../components/Account/ProfileForm.jsx";
 
 export default function AccountPage() {
-  const { user, update } = useContext(AuthContext);
-  const [status, setStatus] = useState({ type: "", msg: "" });
+  const { user } = useContext(AuthContext);   // route déjà protégée
+  const userId = user?.id;
 
-  if (!user) return null; // route protégée normalement
+  const [status, setStatus] = useState({ type: "", msg: "" });
+  const [loading, setLoading] = useState(true);
+  const [initialValues, setInitialValues] = useState({
+    firstname: "", lastname: "", phone: "",
+    address: { street: "", city: "", zipcode: "", country: "" },
+    preferences: { size: "", favoriteBrand: "" },
+  });
+
+  // 🔄 charge user + profile depuis l'API
+  useEffect(() => {
+    let cancel = false;
+    const load = async () => {
+      if (!userId) return;
+      setLoading(true);
+      try {
+        const { user: u, profile: p } = await userProfilesService.getByUserId(userId);
+        if (cancel) return;
+
+        setInitialValues({
+          firstname: u?.first_name ?? "",
+          lastname:  u?.last_name ?? "",
+          phone:     p?.phone ?? "",
+          address: {
+            street:  p?.street ?? "",
+            city:    p?.city ?? "",
+            zipcode: p?.zipcode ?? "",
+            country: p?.country ?? "",
+          },
+          preferences: {
+            size:          p?.pref_size ?? "",
+            favoriteBrand: p?.pref_favorite_brand ?? "",
+          },
+        });
+      } catch {
+        setStatus({ type: "error", msg: "Failed to load profile ❌" });
+      } finally {
+        if (!cancel) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancel = true; };
+  }, [userId]);
 
   const handleSubmit = async (formData) => {
+    if (!userId) return;
+    setStatus({ type: "", msg: "" });
     try {
-      const updated = await update(user.id, formData);
-      if (updated?.id) {
-        setStatus({ type: "success", msg: "Profile updated ✅" });
-      } else {
-        throw new Error();
-      }
+      // mappe vers le payload attendu par PUT /api/users/:id
+      const payload = {
+        first_name: formData.firstname,
+        last_name:  formData.lastname,
+        phone:      formData.phone,
+        address: {
+          street:  formData.address?.street ?? "",
+          city:    formData.address?.city ?? "",
+          zipcode: formData.address?.zipcode ?? "",
+          country: formData.address?.country ?? "",
+        },
+        preferences: {
+          size:          formData.preferences?.size ?? "",
+          favoriteBrand: formData.preferences?.favoriteBrand ?? "",
+        },
+        // optionnel: name combiné pour full_name côté profil
+        name: `${formData.firstname || ""} ${formData.lastname || ""}`.trim(),
+      };
+
+      const { user: u, profile: p } = await userProfilesService.updateByUserId(userId, payload);
+
+      // rafraîchit les champs affichés après update
+      setInitialValues({
+        firstname: u?.first_name ?? "",
+        lastname:  u?.last_name ?? "",
+        phone:     p?.phone ?? "",
+        address: {
+          street:  p?.street ?? "",
+          city:    p?.city ?? "",
+          zipcode: p?.zipcode ?? "",
+          country: p?.country ?? "",
+        },
+        preferences: {
+          size:          p?.pref_size ?? "",
+          favoriteBrand: p?.pref_favorite_brand ?? "",
+        },
+      });
+
+      setStatus({ type: "success", msg: "Profile updated ✅" });
     } catch {
       setStatus({ type: "error", msg: "Update failed ❌" });
     }
   };
+
+  if (!user) return null;
 
   return (
     <div className="account-page" style={{ padding: 16 }}>
@@ -42,24 +121,11 @@ export default function AccountPage() {
         </div>
       )}
 
-      <ProfileForm
-        initialValues={{
-          firstname: user.firstname || "",
-          lastname: user.lastname || "",
-          phone: user.phone || "",
-          address: {
-            street: user.address?.street || "",
-            city: user.address?.city || "",
-            zipcode: user.address?.zipcode || "",
-            country: user.address?.country || "",
-          },
-          preferences: {
-            size: user.preferences?.size || "",
-            favoriteBrand: user.preferences?.favoriteBrand || "",
-          },
-        }}
-        onSubmit={handleSubmit}
-      />
+      {loading ? (
+        <p>Loading…</p>
+      ) : (
+        <ProfileForm initialValues={initialValues} onSubmit={handleSubmit} />
+      )}
     </div>
   );
 }

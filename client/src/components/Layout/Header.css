@@ -1,19 +1,108 @@
-/* src/components/Layout/Header.css */
-.header {
-  display: flex;
+.header{
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--header-h);          /* défini dans global.css */
+  z-index: 1000;
+
+  display:flex; align-items:center;
+  background: linear-gradient(90deg, #111, #1a1c20);
+  color:#fff;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 0 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+}
+
+/* contenu centré */
+.header > .container{
+  display:flex; align-items:center; justify-content:space-between;
+  width:100%;
+}
+
+/* logo container */
+.logo { margin: 0; }
+
+/* lien du logo (image + texte) */
+.logo-link{
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  background-color: #111;
-  color: white;
-}
-
-.header a {
-  color: white;
+  gap: 10px;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: .2px;
   text-decoration: none;
-  margin: 0 0.5rem;
 }
 
-.header a:hover {
-  text-decoration: underline;
+/* image du logo : reste compacte dans la hauteur du header */
+/* image du logo : plus grande + coins arrondis */
+.logo-img{
+  height: 60px;                           /* desktop */
+  max-height: calc(var(--header-h) - 14px);
+  width: auto;
+  display: block;
+  object-fit: contain;
+
+  border-radius: 14px;                    /* ⟵ coins arrondis */
+  /* optionnel esthétique */
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+
+/* mobile : un peu plus petit mais toujours arrondi */
+@media (max-width: 768px){
+  .logo-img{ height: 36px; }
+  /* si tu veux garder le texte à côté du logo, retire la ligne ci-dessous */
+  .logo-text{ display: none; }
+}
+
+
+.logo a{ color:#fff; font-weight:800; letter-spacing:.2px; }
+
+/* Nav (desktop) */
+.nav{ display:flex; align-items:center; gap:10px; }
+.nav a, .nav .logout{
+  color:#eee; text-decoration:none;
+  padding:8px 10px;
+  border-radius:10px;
+  transition: background .15s ease, color .15s ease, transform .15s ease;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+.nav a:hover, .nav .logout:hover{
+  color: var(--primary);
+  background: rgba(255,255,255,.08);
+  transform: translateY(-1px);
+}
+.nav a.active{
+  color: var(--primary);
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.16);
+}
+
+/* Burger (mobile) */
+.burger{
+  display:none;
+  width:40px; height:40px; border:0; background:transparent; cursor:pointer; position:relative;
+}
+.burger span{
+  position:absolute; left:8px; right:8px; height:2px; background:#fff;
+  transition: transform .2s, opacity .2s; border-radius:2px;
+}
+.burger span:nth-child(1){ top:12px; }
+.burger span:nth-child(2){ top:19px; }
+.burger span:nth-child(3){ top:26px; }
+.burger.is-open span:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+.burger.is-open span:nth-child(2){ opacity:0; }
+.burger.is-open span:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
+
+/* Mobile: nav en panneau */
+@media (max-width: 768px){
+  .burger{ display:block; }
+  .nav{
+    position: fixed; top: calc(var(--header-h) + 8px); right: 8px; left: 8px;
+    display:none; flex-direction:column; gap:6px; padding:12px;
+    background: var(--bg-elev); border:1px solid rgba(255,255,255,.08);
+    border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  .nav.nav--open{ display:flex; }
 }

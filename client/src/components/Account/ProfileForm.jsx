@@ -10,49 +10,37 @@ export default function ProfileForm({ initialValues, onSubmit }) {
   });
 
   useEffect(() => {
-    if (initialValues) setForm((prev) => ({ ...prev, ...initialValues }));
+    if (!initialValues) return;
+    setForm(prev => ({
+      ...prev,
+      firstname: initialValues.firstname ?? "",
+      lastname:  initialValues.lastname ?? "",
+      phone:     initialValues.phone ?? "",
+      address: {
+        street:  initialValues.address?.street ?? "",
+        city:    initialValues.address?.city ?? "",
+        zipcode: initialValues.address?.zipcode ?? "",
+        country: initialValues.address?.country ?? "",
+      },
+      preferences: {
+        size:          initialValues.preferences?.size ?? "",
+        favoriteBrand: initialValues.preferences?.favoriteBrand ?? "",
+      },
+    }));
   }, [initialValues]);
 
-  const updateField = (name, value) =>
-    setForm((prev) => ({ ...prev, [name]: value }));
-
+  const updateField  = (name, value) => setForm(prev => ({ ...prev, [name]: value }));
   const updateNested = (group, name, value) =>
-    setForm((prev) => ({
-      ...prev,
-      [group]: { ...(prev[group] || {}), [name]: value },
-    }));
+    setForm(prev => ({ ...prev, [group]: { ...(prev[group] || {}), [name]: value } }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = {
-      firstname: form.firstname.trim(),
-      lastname: form.lastname.trim(),
-      phone: form.phone.trim(),
-      address: {
-        street: form.address.street.trim(),
-        city: form.address.city.trim(),
-        zipcode: form.address.zipcode.trim(),
-        country: form.address.country.trim(),
-      },
-      preferences: {
-        size: form.preferences.size.trim(),
-        favoriteBrand: form.preferences.favoriteBrand.trim(),
-      },
-    };
-    onSubmit?.(payload);
+    onSubmit?.(form);
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="profile-form"
-      style={{
-        display: "grid",
-        gap: 12,
-        maxWidth: 640,
-        marginTop: 16,
-      }}
-    >
+    <form onSubmit={handleSubmit} className="profile-form"
+      style={{ display: "grid", gap: 12, maxWidth: 640, marginTop: 16 }}>
       <h2>Profile</h2>
 
       <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
@@ -110,9 +98,7 @@ export default function ProfileForm({ initialValues, onSubmit }) {
         <input
           placeholder="Favorite brand"
           value={form.preferences.favoriteBrand}
-          onChange={(e) =>
-            updateNested("preferences", "favoriteBrand", e.target.value)
-          }
+          onChange={(e) => updateNested("preferences", "favoriteBrand", e.target.value)}
         />
       </div>
 

@@ -1,0 +1,116 @@
+:root{
+  --bg: #fff7ef;        /* crème */
+  --text: #111111;      /* noir */
+  --muted: #666666;
+  --accent: #e02621;    /* rouge logo */
+  --border: #e6e6e6;
+}
+
+/* Reset minimal */
+*{ box-sizing: border-box; }
+html, body, #root{ height: 100%; }
+body{
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Wrapper centré */
+.auth-wrap{
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* Carte */
+.auth-card{
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+
+.auth-logo{
+  display: block;
+  width: 72px;
+  height: auto;
+  margin: 0 auto 8px;
+  border-radius: 12px;
+}
+
+.auth-title{
+  text-align: center;
+  margin: 8px 0 16px;
+  font-size: 1.35rem;
+}
+
+.auth-error{
+  background: #ffe7e6;
+  border: 1px solid #ffd3d2;
+  color: #6f1a1a;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: .95rem;
+}
+
+.field{ margin-bottom: 12px; }
+.label{
+  display: block;
+  font-size: .92rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.input{
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+}
+.input::placeholder{ color: #9a9a9a; }
+.input:focus{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(224,38,33,.15);
+}
+
+/* Bouton */
+.btn{
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn:hover{ filter: brightness(1.04); }
+
+/* Note bas de carte */
+.auth-note{
+  text-align: center;
+  color: var(--muted);
+  font-size: .95rem;
+  margin-top: 12px;
+}
+.auth-note a{
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.auth-note a:hover{ text-decoration: underline; }
+
+/* Responsive: compacter sur très petit écran */
+@media (max-width: 380px){
+  .auth-card{ padding: 18px; }
+  .btn{ padding: 11px; }
+}

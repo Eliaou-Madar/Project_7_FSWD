@@ -1,12 +1,9 @@
-import React, { useState } from "react";
+// src/components/Checkout/CheckoutForm.jsx
+import React, { useEffect, useState } from "react";
 
-export default function CheckoutForm({ total, onSubmit }) {
+export default function CheckoutForm({ total, onSubmit, initialShipping, submitting }) {
   const [shipping, setShipping] = useState({
-    name: "",
-    street: "",
-    city: "",
-    zipcode: "",
-    country: "",
+    name: "", street: "", city: "", zipcode: "", country: ""
   });
   const [payment, setPayment] = useState({
     method: "card",
@@ -15,14 +12,19 @@ export default function CheckoutForm({ total, onSubmit }) {
     cvc: "",
   });
 
+  useEffect(() => {
+    if (initialShipping) {
+      setShipping(prev => ({ ...prev, ...initialShipping }));
+    }
+  }, [initialShipping]);
+
   const handleShippingChange = (e) => {
     const { name, value } = e.target;
-    setShipping((prev) => ({ ...prev, [name]: value }));
+    setShipping(prev => ({ ...prev, [name]: value }));
   };
-
   const handlePaymentChange = (e) => {
     const { name, value } = e.target;
-    setPayment((prev) => ({ ...prev, [name]: value }));
+    setPayment(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
@@ -31,86 +33,33 @@ export default function CheckoutForm({ total, onSubmit }) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "grid", gap: 16, maxWidth: 500 }}
-    >
+    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16, maxWidth: 560 }}>
       <h2>Shipping Information</h2>
-      <input
-        name="name"
-        placeholder="Full name"
-        value={shipping.name}
-        onChange={handleShippingChange}
-        required
-      />
-      <input
-        name="street"
-        placeholder="Street address"
-        value={shipping.street}
-        onChange={handleShippingChange}
-        required
-      />
-      <input
-        name="city"
-        placeholder="City"
-        value={shipping.city}
-        onChange={handleShippingChange}
-        required
-      />
-      <input
-        name="zipcode"
-        placeholder="Zipcode"
-        value={shipping.zipcode}
-        onChange={handleShippingChange}
-        required
-      />
-      <input
-        name="country"
-        placeholder="Country"
-        value={shipping.country}
-        onChange={handleShippingChange}
-        required
-      />
+      <input name="name" placeholder="Full name" value={shipping.name} onChange={handleShippingChange} required />
+      <input name="street" placeholder="Street address" value={shipping.street} onChange={handleShippingChange} required />
+      <input name="city" placeholder="City" value={shipping.city} onChange={handleShippingChange} required />
+      <input name="zipcode" placeholder="Zipcode" value={shipping.zipcode} onChange={handleShippingChange} required />
+      <input name="country" placeholder="Country" value={shipping.country} onChange={handleShippingChange} required />
 
       <h2>Payment</h2>
-      <select
-        name="method"
-        value={payment.method}
-        onChange={handlePaymentChange}
-      >
+      <select name="method" value={payment.method} onChange={handlePaymentChange}>
         <option value="card">Credit/Debit Card</option>
         <option value="paypal">PayPal</option>
       </select>
 
       {payment.method === "card" && (
         <>
-          <input
-            name="cardNumber"
-            placeholder="Card number"
-            value={payment.cardNumber}
-            onChange={handlePaymentChange}
-            required
-          />
-          <input
-            name="expiry"
-            placeholder="MM/YY"
-            value={payment.expiry}
-            onChange={handlePaymentChange}
-            required
-          />
-          <input
-            name="cvc"
-            placeholder="CVC"
-            value={payment.cvc}
-            onChange={handlePaymentChange}
-            required
-          />
+          <input name="cardNumber" placeholder="Card number" value={payment.cardNumber} onChange={handlePaymentChange} required />
+          <input name="expiry" placeholder="MM/YY" value={payment.expiry} onChange={handlePaymentChange} required />
+          <input name="cvc" placeholder="CVC" value={payment.cvc} onChange={handlePaymentChange} required />
         </>
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <strong>Total: {total} €</strong>
-        <button type="submit">Place order</button>
+        <strong>Total to pay: {Number(total).toFixed(2)} €</strong>
+        <button type="submit" disabled={!!submitting}>
+          {submitting ? "Placing…" : "Place order"}
+        </button>
       </div>
     </form>
   );

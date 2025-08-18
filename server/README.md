@@ -14,6 +14,8 @@ admin@sneakrush.com
 
 admin123
 
+JWT
+
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU1NTA1NzcwLCJleHAiOjE3NTU1MDkzNzB9.9KSnMkmiCDuNNhYTlRLz0AEgNdyzAJyGcL9wayoiB8g
 
 jdoe1@example.com

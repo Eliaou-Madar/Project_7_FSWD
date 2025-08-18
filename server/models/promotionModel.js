@@ -1,11 +1,20 @@
 // server/models/promotionModel.js
 import db from "../database/connection.js";
-import { toMySQLDate } from "../utils/mysqlDate.js";
 
 /**
  * On renvoie les colonnes RÉELLES (code, discount_type, discount_value, …)
  * + des ALIAS de compatibilité (title, discount_percent) pour tout ancien code.
+ *
+ * NOTE: start_date / end_date sont désormais stockées en TEXTE (ISO string).
+ * Pour les comparaisons (active/inactive), on convertit au vol avec STR_TO_DATE.
  */
+
+// Convertit une ISO "YYYY-MM-DDTHH:MM:SS(.ms)Z" en DATETIME via SQL
+// - supprime le suffixe ".xxx" si présent
+// - remplace 'T' par ' ' et retire 'Z'
+const SQL_TO_DATETIME = (col) =>
+  `STR_TO_DATE(REPLACE(REPLACE(SUBSTRING_INDEX(${col}, '.', 1), 'T', ' '), 'Z', ''), '%Y-%m-%d %H:%i:%s')`;
+
 const BASE_SELECT = `
   SELECT
     id,
@@ -15,31 +24,32 @@ const BASE_SELECT = `
     discount_type,
     discount_value,
     discount_value AS discount_percent,  -- alias compat
-    start_date,
-    end_date,
+    start_date,                          -- TEXTE ISO
+    end_date,                            -- TEXTE ISO
     is_active,
     created_at
   FROM promotions
 `;
 
-/** Promos actives */
+/** Promos actives (comparaison via STR_TO_DATE) */
 export async function getActivePromotions() {
   const SQL = `
     ${BASE_SELECT}
     WHERE is_active = 1
-      AND (start_date IS NULL OR start_date <= NOW())
-      AND (end_date   IS NULL OR end_date   >= NOW())
+      AND (start_date IS NULL OR ${SQL_TO_DATETIME("start_date")} <= NOW())
+      AND (end_date   IS NULL OR ${SQL_TO_DATETIME("end_date")}   >= NOW())
     ORDER BY created_at DESC
   `;
   const [rows] = await db.query(SQL);
   return rows;
 }
 
-/** Liste admin paginée + tri */
+/** Liste admin paginée + tri (tri texte pour dates ; pour tri chronologique, on peut utiliser STR_TO_DATE) */
 export async function listPromotions({ limit = 20, offset = 0, sort = "newest" } = {}) {
+  // Par défaut: newest
   let orderBy = "created_at DESC";
-  if (sort === "start_date") orderBy = "start_date DESC";
-  else if (sort === "end_date") orderBy = "end_date DESC";
+  if (sort === "start_date") orderBy = `${SQL_TO_DATETIME("start_date")} DESC`;
+  else if (sort === "end_date") orderBy = `${SQL_TO_DATETIME("end_date")} DESC`;
 
   const SQL = `
     ${BASE_SELECT}
@@ -66,14 +76,14 @@ export async function getPromotionForProduct(_productId) {
   return null;
 }
 
-/** Création (colonnes RÉELLES) */
+/** Création (on stocke start_date / end_date tel quel en TEXTE ISO) */
 export async function createPromotion({
   code,
   description = null,
   discount_type,
   discount_value,
-  start_date = null,
-  end_date = null,
+  start_date = null,   // string ISO, ex: "2025-05-22T00:00:00.000Z"
+  end_date = null,     // string ISO
   is_active = true,
 }) {
   const [r] = await db.query(
@@ -85,23 +95,23 @@ export async function createPromotion({
       description,
       discount_type,
       Number(discount_value),
-      toMySQLDate(start_date),
-      toMySQLDate(end_date),
+      start_date,                   // stocké tel quel (texte)
+      end_date,                     // stocké tel quel (texte)
       is_active ? 1 : 0,
     ]
   );
   return { id: r.insertId };
 }
 
-/** Mise à jour (colonnes RÉELLES) */
+/** Mise à jour (on passe les valeurs telles quelles) */
 export async function updatePromotion(id, payload = {}) {
   const allowed = [
     "code",
     "description",
     "discount_type",
     "discount_value",
-    "start_date",
-    "end_date",
+    "start_date",  // texte
+    "end_date",    // texte
     "is_active",
   ];
 
@@ -119,12 +129,9 @@ export async function updatePromotion(id, payload = {}) {
       } else if (k === "is_active") {
         fields.push("is_active = ?");
         params.push(payload[k] ? 1 : 0);
-      } else if (k === "start_date" || k === "end_date") {
-        fields.push(`${k} = ?`);
-        params.push(toMySQLDate(payload[k]));
       } else {
         fields.push(`${k} = ?`);
-        params.push(payload[k]);
+        params.push(payload[k]); // start_date/end_date: texte brut
       }
     }
   }
@@ -145,10 +152,13 @@ export async function deletePromotion(id) {
   return { affectedRows: r.affectedRows };
 }
 
-/** Supprimer les expirées */
+/** Supprimer les expirées (comparaison via STR_TO_DATE) */
 export async function deleteExpiredPromotions() {
-  const [r] = await db.query(
-    `DELETE FROM promotions WHERE end_date IS NOT NULL AND end_date < NOW()`
-  );
+  const SQL = `
+    DELETE FROM promotions
+    WHERE end_date IS NOT NULL
+      AND ${SQL_TO_DATETIME("end_date")} < NOW()
+  `;
+  const [r] = await db.query(SQL);
   return { affectedRows: r.affectedRows };
 }

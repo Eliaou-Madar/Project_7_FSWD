@@ -1,0 +1,36 @@
+.actions-row {
+  display: flex;
+  gap: var(--gap-sm);
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-card { display: grid; gap: var(--gap-sm); }
+.triple-grid {
+  display: grid;
+  gap: var(--gap-sm);
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+}
+.double-grid {
+  display: grid;
+  gap: var(--gap-sm);
+  grid-template-columns: 1fr 1fr;
+}
+
+.labels { display: inline-flex; gap: 6px; align-items: center; }
+
+.promo-cards { display: grid; gap: 10px; }
+.promo-card {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  background: #fff;
+}
+
+.promo-head { font-weight: 700; display: flex; gap: 8px; align-items: center; }
+.promo-sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+.promo-desc { font-size: 12px; opacity: 0.75; margin-top: 4px; }

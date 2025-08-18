@@ -1,22 +1,12 @@
-// client/src/components/Products/ProductCard.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
-import { cartService } from "../../services/cart.service";
+import { productsService } from "../../services/products.service";
 
-function firstDefined(...vals) {
-  for (const v of vals) if (v !== undefined && v !== null) return v;
-  return null;
-}
-
-// Fallback final garanti (pixel 1x1 PNG en data URI)
 const DATA_URI_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
-
-// Facultatif: fallback projet (si tu as bien ce fichier)
 const PROJECT_FALLBACK = "/img/placeholder.jpg";
 
-// Nettoie et normalise une URL
 function cleanUrl(u) {
   if (!u) return null;
   let s = String(u).trim().replace(/^"+|"+$/g, "").replace(/^'+|'+$/g, "").replace(/\\/g, "/");
@@ -26,122 +16,108 @@ function cleanUrl(u) {
   return s;
 }
 
-// Récupère l'URL d'image depuis product: url | images[0] | images[0].url
-function pickImageUrl(product) {
+function firstImage(product) {
   if (product?.url) return product.url;
   const imgs = product?.images;
   if (Array.isArray(imgs) && imgs.length) {
-    const first = imgs[0];
-    if (typeof first === "string") return first;
-    if (first && typeof first === "object") return first.url || first.src || first.path || null;
+    const f = imgs[0];
+    if (typeof f === "string") return f;
+    if (f && typeof f === "object") return f.url || f.src || f.path || null;
   }
   return null;
 }
 
-// Essaie les variantes de l'URL: relative/absolue
-function buildCandidates(raw) {
-  const cleaned = cleanUrl(raw);
-  const list = [];
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-
-  if (cleaned) {
-    // 1) telle quelle (ex: /img/shoes/1.jpg)
-    list.push(cleaned);
-
-    // 2) absolue (http://localhost:5173/img/shoes/1.jpg)
-    if (origin) list.push(new URL(cleaned, origin).href);
-
-    // 3) sans slash initial (img/shoes/1.jpg)
-    const noSlash = cleaned.startsWith("/") ? cleaned.slice(1) : cleaned;
-    list.push(noSlash);
-
-    // 4) absolue sans slash initial
-    if (origin) list.push(new URL(noSlash, origin + "/").href);
+function mapSizeRow(s) {
+  const id = Number(s.product_size_id ?? s.size_id ?? s.id ?? s.ps_id ?? s.psid ?? NaN);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const labelRaw = s.size_label ?? s.label ?? s.size ?? s.name ?? s.value ?? id;
+  const label = String(labelRaw);
+  const stockRaw = s.stock_qty ?? s.stock ?? s.qty ?? s.quantity ?? s.qty_in_stock ?? s.in_stock ?? null;
+  let stock = null;
+  if (stockRaw !== null && stockRaw !== undefined) {
+    const n = Number(stockRaw);
+    stock = Number.isFinite(n) ? n : null;
   }
-
-  // 5) fallback projet (si présent), sinon data URI
-  list.push(PROJECT_FALLBACK);
-  list.push(DATA_URI_PIXEL);
-
-  // supprime doublons
-  return Array.from(new Set(list));
+  if (stock === null && (s.available === true || s.is_available === true)) stock = 999;
+  return { id, label, stock };
 }
 
-// Précharge une liste d'URLs et renvoie la 1ère qui charge
-function preloadFirstWorking(urls) {
-  return new Promise((resolve) => {
-    let i = 0;
-    const tryNext = () => {
-      if (i >= urls.length) return resolve(DATA_URI_PIXEL);
-      const testUrl = urls[i++];
-      const img = new Image();
-      img.onload = () => resolve(testUrl);
-      img.onerror = () => tryNext();
-      img.src = testUrl;
-    };
-    tryNext();
-  });
+function normalizeSizesFromProduct(product) {
+  const raw = Array.isArray(product?.sizes) ? product.sizes : [];
+  return raw.map(mapSizeRow).filter(Boolean);
 }
 
-export default function ProductCard({ product }) {
-  const { addToCart } = useCart();
+export default function ProductCard({ product, to }) {
+  const { add: addCart, setQty, items } = useCart();
   if (!product) return null;
 
-  const id = firstDefined(product.id, product.product_id, product.sku);
-  if (!id) return null;
+  const productId = Number(product.id);
+  if (!Number.isInteger(productId) || productId <= 0) return null;
 
-  const productSizeId = firstDefined(product.product_size_id, product.size_id, product.sizeId, id);
-  const name = firstDefined(product.name, product.title, "Unnamed");
-  const price = useMemo(() => {
-    const p = firstDefined(product.price, product.unit_price, null);
+  const brand = product.brand ?? product.maker ?? "";
+  const name = product.name ?? product.title ?? "Unnamed";
+
+  const basePrice = useMemo(() => {
+    const p = product.price ?? product.unit_price ?? null;
     return typeof p === "string" ? Number(p) : p;
   }, [product]);
 
-  // Candidat principal depuis product (d'après ton log: images[0] = "/img/shoes/1.jpg")
-  const rawCandidate = useMemo(() => pickImageUrl(product), [product]);
-  const candidates = useMemo(() => buildCandidates(rawCandidate), [rawCandidate]);
+  const candidate = cleanUrl(firstImage(product)) || PROJECT_FALLBACK;
+  const [src, setSrc] = useState(candidate);
+  useEffect(() => setSrc(candidate), [candidate]);
 
-  const [displaySrc, setDisplaySrc] = useState(DATA_URI_PIXEL);
+  const initialSizes = useMemo(() => normalizeSizesFromProduct(product), [product]);
+  const [sizes, setSizes] = useState(initialSizes);
 
   useEffect(() => {
     let alive = true;
-    if (import.meta.env.DEV) {
-      console.log("---- ProductCard image debug ----");
-      console.log("product.id        =", id);
-      console.log("raw candidate     =", rawCandidate);
-      console.log("candidates to try =", candidates);
-    }
-    preloadFirstWorking(candidates).then((ok) => {
-      if (alive) {
-        if (import.meta.env.DEV) console.log("✅ picked image src =", ok);
-        setDisplaySrc(ok);
+    async function fetchSizes() {
+      if (sizes.length > 0) return;
+      try {
+        const full = await productsService.getById(productId);
+        const mapped = normalizeSizesFromProduct(full);
+        if (alive && mapped.length) setSizes(mapped);
+      } catch (e) {
+        console.warn("getById failed, sizes unknown", e);
       }
-    });
-    return () => {
-      alive = false;
-    };
-  }, [id, rawCandidate, candidates]);
+    }
+    fetchSizes();
+    return () => { alive = false; };
+  }, [productId, sizes.length]);
 
-  const [qty, setQty] = useState(1);
-  const href = `/products/${id}`;
-  const inc = () => setQty((q) => Math.min(99, q + 1));
-  const dec = () => setQty((q) => Math.max(1, q - 1));
+  const defaultSizeId = sizes.find((s) => (s.stock ?? 1) > 0)?.id ?? sizes[0]?.id ?? null;
+  const [selectedSizeId, setSelectedSizeId] = useState(defaultSizeId);
+  useEffect(() => { setSelectedSizeId(defaultSizeId); }, [defaultSizeId]);
+
+  const [qty, setQtyLocal] = useState(1);
+  const inc = () => setQtyLocal((q) => Math.min(99, q + 1));
+  const dec = () => setQtyLocal((q) => Math.max(1, q - 1));
+
+  const priceText = basePrice != null ? `${basePrice} €` : "—";
+
+  // ✅ utilise l'URL passée par le parent (sécurisé)
+  const href = to || `/products/${productId}`;
 
   const onAdd = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const sizeIdInt = Number(productSizeId);
-    if (!Number.isInteger(sizeIdInt) || sizeIdInt <= 0) {
-      console.error("Invalid product_size_id", { productSizeId });
-      alert("Invalid product size id");
+    const sizeId = Number(selectedSizeId);
+    if (!Number.isInteger(sizeId) || sizeId <= 0) {
+      alert("Choisis une taille valide.");
       return;
     }
     try {
-      await cartService.add(sizeIdInt, qty);
-      addToCart({ ...product, id }, qty);
+      await addCart(sizeId, qty);
     } catch (err) {
-      console.error("cart add failed", err?.response?.status, err?.response?.data || err);
-     
+      const status = err?.response?.status;
+      if (status === 409) {
+        const existing = items.find((it) => Number(it.id) === sizeId);
+        const nextQty = (existing?.qty ?? 0) + qty;
+        await setQty(sizeId, nextQty);
+      } else {
+        console.error("cart add failed", status, err?.response?.data || err);
+        alert("Impossible d'ajouter au panier.");
+      }
     }
   };
 
@@ -149,17 +125,42 @@ export default function ProductCard({ product }) {
     <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
       <Link to={href} style={{ color: "inherit", textDecoration: "none" }}>
         <img
-          key={displaySrc /* force re-render si src change */}
-          src={displaySrc}
+          src={src || DATA_URI_PIXEL}
           alt={name}
           loading="lazy"
+          onError={() => setSrc(PROJECT_FALLBACK)}
           style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 8 }}
         />
         <h3 style={{ margin: "8px 0 4px" }}>{name}</h3>
+        {brand ? <div style={{ opacity: 0.8, fontSize: 12 }}>{brand}</div> : null}
       </Link>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <strong>{price != null ? `${price} €` : "—"}</strong>
+      {sizes.length > 0 ? (
+        <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
+          <label style={{ fontSize: 13, opacity: 0.9 }}>Taille</label>
+          <select
+            value={selectedSizeId ?? ""}
+            onChange={(e) => setSelectedSizeId(Number(e.target.value) || null)}
+            style={{ padding: "6px 8px", borderRadius: 8, border: "1px solid #ddd" }}
+          >
+            {sizes.map((s) => {
+              const out = (s.stock ?? 1) <= 0;
+              return (
+                <option key={s.id} value={s.id} disabled={out}>
+                  {s.label} {out ? "(épuisé)" : s.stock != null ? `(stock: ${s.stock})` : ""}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+      ) : (
+        <div style={{ marginTop: 8, fontSize: 12, color: "#a00" }}>
+          Chargement des tailles…
+        </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 10 }}>
+        <strong>{priceText}</strong>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <button type="button" onClick={dec} style={{ width: 28 }}>-</button>
           <input
@@ -167,11 +168,17 @@ export default function ProductCard({ product }) {
             min={1}
             max={99}
             value={qty}
-            onChange={(e) => setQty(Math.max(1, Math.min(99, Number(e.target.value) || 1)))}
+            onChange={(e) => setQtyLocal(Math.max(1, Math.min(99, Number(e.target.value) || 1)))}
             style={{ width: 48, textAlign: "center" }}
           />
           <button type="button" onClick={inc} style={{ width: 28 }}>+</button>
-          <button type="button" onClick={onAdd} disabled={price == null}>Add</button>
+          <button
+            type="button"
+            onClick={onAdd}
+            disabled={basePrice == null || !selectedSizeId || sizes.length === 0}
+          >
+            Add
+          </button>
         </div>
       </div>
     </div>

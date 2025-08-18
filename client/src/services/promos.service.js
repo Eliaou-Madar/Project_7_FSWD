@@ -13,8 +13,9 @@ function join(root, path) {
 const API_ROOT = join(BASE_URL, "/api");
 const PROMOS_URL = join(API_ROOT, "/promotions");
 
-// ---- Mappers ----
-// Serveur -> UI (ton composant attend: {id, code, type, value, active})
+/* ---------------- MAPPERS ---------------- */
+
+// Serveur -> UI (ton composant attend: {id, code, type, value, active, ...})
 const toUi = (p) => {
   const now = Date.now();
   const start = p.start_date ? new Date(p.start_date).getTime() : null;
@@ -22,51 +23,42 @@ const toUi = (p) => {
 
   return {
     id: p.id,
-    code: p.code ?? p.title ?? "", // accepte alias
+    code: p.code ?? p.title ?? "",
     type: p.discount_type ?? "percent",
     value: Number(p.discount_value ?? p.discount_percent ?? 0),
+    // actif si plage valide ou fallback sur is_active
     active:
       start != null && end != null
         ? start <= now && now <= end
-        : (p.is_active ?? false),
+        : !!p.is_active,
     description: p.description ?? "",
-    start_date: p.start_date ?? null,
+    start_date: p.start_date ?? null, // ISO string ou null (le back stocke en texte)
     end_date: p.end_date ?? null,
   };
 };
 
-// UI -> Serveur
-// On encode 'active' en plage de dates (actif: maintenant → +1 an, inactif: fini hier)
+// UI -> Serveur (NOUVEAU schéma)
 const toDb = (f) => {
-  const now = new Date();
-  const inOneYear = new Date(now.getTime() + 365 * 24 * 3600 * 1000);
-  const yesterday = new Date(now.getTime() - 24 * 3600 * 1000);
-
-  const start_date =
-    f.start_date ??
-    (f.active ? now.toISOString() : now.toISOString());
-  const end_date =
-    f.end_date ??
-    (f.active ? inOneYear.toISOString() : yesterday.toISOString());
-
-  // Le backend attend { title, description?, discount_percent, start_date, end_date }
-  return {
-    title: String(f.code || "").toUpperCase(),
+  const payload = {
+    code: String(f.code || "").toUpperCase(),
+    discount_type: f.type === "fixed" ? "fixed" : "percent",
+    discount_value: Number(f.value ?? 0),
     description: f.description ?? "",
-    discount_percent:
-      f.type && f.type !== "percent"
-        ? Number(f.value) // fallback, mais le back ne gère que percent
-        : Number(f.value),
-    start_date,
-    end_date,
+    // Dates: laisser ISO string ou null; le back accepte le texte
+    start_date: f.start_date || null,
+    end_date: f.end_date || null,
+    is_active: !!f.active,
   };
+  return payload;
 };
+
+/* ---------------- SERVICE ---------------- */
 
 export const promosService = {
   // LISTE (admin) → GET /api/promotions
   async list() {
     const res = await authenticatedRequest(PROMOS_URL, "get");
-    // tes routes renvoient { status, message, data }
+    // les routes renvoient soit { status, message, data }, soit un tableau direct
     const rows = Array.isArray(res?.data?.data)
       ? res.data.data
       : Array.isArray(res?.data)
@@ -86,12 +78,19 @@ export const promosService = {
 
   // CREATE (admin) → POST /api/promotions
   async create(form) {
-    return authenticatedRequest(PROMOS_URL, "post", toDb(form));
+    // AdminPromosPage fournit déjà start_date/end_date en ISO (ou null)
+    const db = toDb(form);
+    return authenticatedRequest(PROMOS_URL, "post", db, {
+      headers: { "Content-Type": "application/json" },
+    });
   },
 
   // UPDATE (admin) → PUT /api/promotions/:id
   async update(id, form) {
-    return authenticatedRequest(join(PROMOS_URL, `/${id}`), "put", toDb(form));
+    const db = toDb(form);
+    return authenticatedRequest(join(PROMOS_URL, `/${id}`), "put", db, {
+      headers: { "Content-Type": "application/json" },
+    });
   },
 
   // DELETE (admin) → DELETE /api/promotions/:id

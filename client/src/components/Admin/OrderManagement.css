@@ -1,0 +1,93 @@
+.orders-container {
+  display: grid;
+  gap: 14px;
+}
+
+.orders-filter {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.orders-list {
+  display: grid;
+  gap: 12px;
+}
+
+.order-card {
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: var(--radius-md, 8px);
+  padding: 12px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+.order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-date {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.order-sub {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.order-status-line {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.order-status {
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  text-transform: capitalize;
+  margin-left: 4px;
+}
+
+/* variantes couleurs */
+.order-status.pending { background: #fff8e1; color: #8d6e00; }
+.order-status.paid { background: #e8f5e9; color: #256029; }
+.order-status.shipped { background: #e3f2fd; color: #0d47a1; }
+.order-status.delivered { background: #f1f8e9; color: #33691e; }
+.order-status.canceled { background: #ffebee; color: #b71c1c; }
+
+.order-user {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+.order-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.order-actions select,
+.order-actions button {
+  font-size: 13px;
+  padding: 4px 10px;
+}
+
+.order-actions .btn-cancel {
+  background: #fbe9e7;
+  border: 1px solid #ffcdd2;
+  color: #b71c1c;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.order-actions .btn-cancel:hover {
+  background: #ffcdd2;
+}

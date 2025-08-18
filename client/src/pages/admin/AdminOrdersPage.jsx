@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { ordersService } from "../../services/orders.service";
 import OrderManagement from "../../components/Admin/OrderManagement.jsx";
-
+import "./AdminOrdersPage.css";
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);

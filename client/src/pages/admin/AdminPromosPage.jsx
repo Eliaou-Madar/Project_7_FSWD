@@ -1,6 +1,8 @@
 // src/pages/admin/AdminPromosPage.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { promosService } from "../../services/promos.service";
+import "../../styles/admin.css";
+import "./AdminPromosPage.css";
 
 // helpers for datetime-local <-> ISO
 const toLocalDT = (iso) => {
@@ -109,27 +111,16 @@ export default function AdminPromosPage() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
+    <div className="admin-container">
       <h1>Admin · Promotions</h1>
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
-        <button onClick={startCreate}>+ New promo</button>
-        {err && <span style={{ color: "crimson", marginLeft: 8 }}>{err}</span>}
+      <div className="actions-row">
+        <button className="btn btn-primary" onClick={startCreate}>+ New promo</button>
+        {err && <span className="status-error" style={{ marginLeft: 8 }}>{err}</span>}
       </div>
-
       {(creating || editing) && (
-        <form
-          onSubmit={submit}
-          style={{
-            display: "grid",
-            gap: 8,
-            border: "1px solid #eee",
-            padding: 12,
-            borderRadius: 10,
-            marginBottom: 12,
-          }}
-        >
-          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr 1fr", alignItems: "center" }}>
+        <form onSubmit={submit} className="panel form-card" style={{ marginBottom: 12 }}>
+          <div className="triple-grid">
             <input
               placeholder="CODE"
               value={form.code}
@@ -158,11 +149,10 @@ export default function AdminPromosPage() {
             value={form.description}
             onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
             rows={3}
-            style={{ resize: "vertical" }}
           />
 
-          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-            <label style={{ display: "grid", gap: 4 }}>
+          <div className="double-grid">
+            <label className="label-col">
               <span>Start date (optional)</span>
               <input
                 type="datetime-local"
@@ -170,7 +160,7 @@ export default function AdminPromosPage() {
                 onChange={(e) => setForm((p) => ({ ...p, start_date: e.target.value }))}
               />
             </label>
-            <label style={{ display: "grid", gap: 4 }}>
+            <label className="label-col">
               <span>End date (optional)</span>
               <input
                 type="datetime-local"
@@ -180,7 +170,7 @@ export default function AdminPromosPage() {
             </label>
           </div>
 
-          <label style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+          <label className="labels">
             <input
               type="checkbox"
               checked={!!form.active}
@@ -189,47 +179,29 @@ export default function AdminPromosPage() {
             Active (if dates empty, we’ll auto-fill on server/service)
           </label>
 
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-            <button type="button" onClick={resetForm}>Cancel</button>
-            <button type="submit">{editing ? "Save changes" : "Create promo"}</button>
+          <div className="actions" style={{ justifyContent: "flex-end" }}>
+            <button type="button" className="btn" onClick={resetForm}>Cancel</button>
+            <button type="submit" className="btn btn-primary">{editing ? "Save changes" : "Create promo"}</button>
           </div>
         </form>
       )}
 
       {loading ? (
-        <p>Loading…</p>
+        <p className="status-loading">Loading…</p>
       ) : !items.length ? (
-        <p>No promotions.</p>
+        <p className="status-empty">No promotions.</p>
       ) : (
-        <div style={{ display: "grid", gap: 10 }}>
+        <div className="promo-cards">
           {items.map((p) => (
-            <div
-              key={p.id}
-              style={{
-                border: "1px solid #eee",
-                borderRadius: 10,
-                padding: 10,
-                display: "grid",
-                gridTemplateColumns: "1fr auto",
-                gap: 10,
-              }}
-            >
+            <div key={p.id} className="promo-card">
               <div>
-                <div style={{ fontWeight: 700, display: "flex", gap: 8, alignItems: "center" }}>
+                <div className="promo-head">
                   <span>{p.code}</span>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      padding: "2px 6px",
-                      borderRadius: 999,
-                      background: p.active ? "#e8f7ee" : "#f5e9e9",
-                      color: p.active ? "#1f7a3a" : "#8c2b2b",
-                    }}
-                  >
+                  <span className={`badge ${p.active ? "badge-success" : "badge-danger"}`}>
                     {p.active ? "Active" : "Inactive"}
                   </span>
                 </div>
-                <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
+                <div className="promo-sub">
                   {p.type === "percent" ? `${p.value}%` : `${p.value} €`}
                   {p.start_date || p.end_date ? (
                     <>
@@ -240,13 +212,13 @@ export default function AdminPromosPage() {
                   ) : null}
                 </div>
                 {p.description ? (
-                  <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>{p.description}</div>
+                  <div className="promo-desc">{p.description}</div>
                 ) : null}
               </div>
 
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <button onClick={() => startEdit(p)}>Edit</button>
-                <button onClick={() => remove(p.id)}>Delete</button>
+              <div className="actions">
+                <button className="btn" onClick={() => startEdit(p)}>Edit</button>
+                <button className="btn btn-danger" onClick={() => remove(p.id)}>Delete</button>
               </div>
             </div>
           ))}
