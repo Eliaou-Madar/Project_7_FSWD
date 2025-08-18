@@ -1,40 +1,54 @@
-import axios from "axios";
+// src/utils/general/tokenUtil.js
 import { BASE_URL } from "../../data/api";
-import { getItem } from "../storage";
 
-// Récupère un token depuis le storage (token à part OU dans user.token)
 export function getToken() {
-  const direct = getItem("token");
-  if (direct) return String(direct).replace(/^Bearer\s+/i, "");
-  const user = getItem("user");
-  if (user?.token) return String(user.token).replace(/^Bearer\s+/i, "");
-  return null;
+  try {
+    const saved = JSON.parse(localStorage.getItem("user") || "null");
+    return saved?.token || localStorage.getItem("token") || null;
+  } catch {
+    return localStorage.getItem("token") || null;
+  }
 }
 
 /**
- * Requête authentifiée générique (axios)
- * @param {string} url - chemin absolu ou relatif à BASE_URL
- * @param {"get"|"post"|"put"|"patch"|"delete"} method
- * @param {object} [data]
- * @param {object} [config] - axios config additionnel
+ * authenticatedRequest(urlOrPath, method, body, options)
+ * - urlOrPath peut être absolu ou commencer par /api
+ * - Injecte automatiquement Authorization: Bearer <token>
  */
-export async function authenticatedRequest(url, method = "get", data, config = {}) {
+export async function authenticatedRequest(urlOrPath, method = "get", body, options = {}) {
   const token = getToken();
-  const isAbsolute = /^https?:\/\//i.test(url);
-  const fullUrl = isAbsolute ? url : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  const isAbsolute = /^https?:\/\//i.test(urlOrPath);
+  const url = isAbsolute
+    ? urlOrPath
+    : urlOrPath.startsWith("/api")
+    ? `${BASE_URL}${urlOrPath}`
+    : `${BASE_URL}/api${urlOrPath.startsWith("/") ? "" : "/"}${urlOrPath}`;
 
   const headers = {
     "Content-Type": "application/json",
-    ...(config.headers || {}),
+    ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  return axios({
-    url: fullUrl,
-    method,
-    data,
+  const res = await fetch(url, {
+    method: method.toUpperCase(),
     headers,
-    withCredentials: false, // inutile en mode Bearer
-    ...config,
+    body: ["GET", "HEAD"].includes(method.toUpperCase()) ? undefined : JSON.stringify(body ?? {}),
   });
+
+  let data = null;
+  const ct = (res.headers.get("content-type") || "").toLowerCase();
+  if (ct.includes("application/json")) {
+    try { data = await res.json(); } catch {}
+  } else {
+    // pour aider au debug
+    const text = await res.text().catch(() => "");
+    throw new Error(`Unexpected content-type (${ct}) from ${url}: ${text.slice(0, 200)}...`);
+  }
+
+  if (!res.ok) {
+    const msg = data?.message || data?.error || `http_${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
 }

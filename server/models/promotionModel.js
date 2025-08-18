@@ -1,5 +1,6 @@
 // server/models/promotionModel.js
 import db from "../database/connection.js";
+import { toMySQLDate } from "../utils/mysqlDate.js";
 
 /**
  * On renvoie les colonnes RÉELLES (code, discount_type, discount_value, …)
@@ -84,9 +85,9 @@ export async function createPromotion({
       description,
       discount_type,
       Number(discount_value),
-      start_date,
-      end_date,
-      !!is_active,
+      toMySQLDate(start_date),
+      toMySQLDate(end_date),
+      is_active ? 1 : 0,
     ]
   );
   return { id: r.insertId };
@@ -117,7 +118,10 @@ export async function updatePromotion(id, payload = {}) {
         params.push(Number(payload[k]));
       } else if (k === "is_active") {
         fields.push("is_active = ?");
-        params.push(!!payload[k]);
+        params.push(payload[k] ? 1 : 0);
+      } else if (k === "start_date" || k === "end_date") {
+        fields.push(`${k} = ?`);
+        params.push(toMySQLDate(payload[k]));
       } else {
         fields.push(`${k} = ?`);
         params.push(payload[k]);
