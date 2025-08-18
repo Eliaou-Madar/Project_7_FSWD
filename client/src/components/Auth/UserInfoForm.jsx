@@ -1,5 +1,7 @@
 // src/components/Auth/UserInfoForm.jsx
 import React, { useState } from "react";
+import "./UserInfoForm.css";
+
 
 export default function UserInfoForm({ onSubmit, onCancel }) {
   const [form, setForm] = useState({

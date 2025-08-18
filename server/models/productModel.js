@@ -1,5 +1,7 @@
-// server/models/productModel.js
 import db from "../database/connection.js";
+// --- HOTFIX: empêche "ReferenceError: sizes is not defined"
+let sizes = [];
+
 
 /* ----------- Lister les produits avec filtres ----------- */
 export async function listProducts({
@@ -63,6 +65,7 @@ export async function listProducts({
   const [rows] = await db.query(sql, [...params, Number(limit), Number(offset)]);
   return rows;
 }
+
 /** Tailles par défaut (modifiable) */
 const DEFAULT_SIZES = [
   { label: "EU 40", stock: 10 },
@@ -114,8 +117,8 @@ export async function getProductById(id) {
   return rows[0] || null;
 }
 
-
 /* ----------- Créer un produit (transaction) ----------- */
+/* ----------- Créer un produit (SIMPLE, sans tailles) ----------- */
 export async function createProduct({ name, brand, description, price, is_limited = false, images = [] }) {
   const conn = await db.getConnection();
   try {
@@ -124,39 +127,22 @@ export async function createProduct({ name, brand, description, price, is_limite
     const [res] = await conn.query(
       `INSERT INTO products (name, brand, description, price, is_limited)
        VALUES (?, ?, ?, ?, ?)`,
-      [name, brand, description, price, is_limited ? 1 : 0]
+      [name, brand, description, Number(price), is_limited ? 1 : 0]
     );
     const productId = res.insertId;
 
     if (Array.isArray(images) && images.length) {
-      const values = images.filter(Boolean).map((url) => [productId, url]);
+      const values = images.filter(Boolean).map((u) => [productId, String(u)]);
       if (values.length) {
         await conn.query(`INSERT INTO product_images (product_id, url) VALUES ?`, [values]);
       }
-    }
-
-    // TAILLES par défaut si non fournies
-    let normalizedSizes = normalizeSizes(sizes);
-    if (!normalizedSizes.length) {
-      normalizedSizes = DEFAULT_SIZES.slice(); // clone
-    }
-
-    if (normalizedSizes.length) {
-      const sizeValues = normalizedSizes.map((s) => [
-        productId,
-        s.label,
-        Number(s.stock ?? 0),
-      ]);
-      await conn.query(
-        `INSERT INTO product_sizes (product_id, size_label, stock_qty) VALUES ?`,
-        [sizeValues]
-      );
     }
 
     await conn.commit();
     return { id: productId };
   } catch (err) {
     await conn.rollback();
+    console.error("[createProduct] error:", err.code || err.message);
     throw err;
   } finally {
     conn.release();
@@ -164,7 +150,6 @@ export async function createProduct({ name, brand, description, price, is_limite
 }
 
 export async function replaceProductImages(productId, images = []) {
-  // Sécurise
   const urls = (Array.isArray(images) ? images : []).filter(Boolean);
   await db.query(`DELETE FROM product_images WHERE product_id = ?`, [productId]);
   if (urls.length) {
@@ -184,7 +169,6 @@ export async function replaceProductSizes(productId, sizes = []) {
     );
   }
 }
-
 
 /* ----------- Mettre à jour un produit ----------- */
 export async function updateProduct(id, fields) {

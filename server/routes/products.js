@@ -1,4 +1,3 @@
-// server/routes/products.js
 import { Router } from "express";
 import auth from "../utils/authMiddleware.js";
 import adminOnly from "../utils/adminMiddleware.js";
@@ -9,7 +8,7 @@ import {
   updateProduct,
   deleteProduct,
 } from "../models/productModel.js";
-import { addManySizes } from "../models/productSizeModel.js"; // ⬅️ IMPORTANT
+import { addManySizes } from "../models/productSizeModel.js"; // ⬅️ tailles
 
 const router = Router();
 const isInt = (v) => /^\d+$/.test(String(v));
@@ -26,7 +25,8 @@ const DEFAULT_SIZES = [
 
 /**
  * @desc Liste des produits (public)
- * ...
+ * @route GET /products
+ * @query search, brand, is_limited, minPrice, maxPrice, limit, offset, sort(newest|price_asc|price_desc)
  */
 router.get("/", async (req, res) => {
   try {
@@ -54,14 +54,14 @@ router.get("/", async (req, res) => {
 
     res.status(200).json({ products });
   } catch (e) {
-    console.error(e);
+    console.error("List products failed:", e);
     res.status(500).json({ message: "An error occurred while listing products" });
   }
 });
 
 /**
  * @desc Détail produit (public)
- * ...
+ * @route GET /products/:id
  */
 router.get("/:id", async (req, res) => {
   const id = req.params.id;
@@ -71,40 +71,25 @@ router.get("/:id", async (req, res) => {
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.status(200).json({ product });
   } catch (e) {
-    console.error(e);
+    console.error("Get product failed:", e);
     res.status(500).json({ message: "An error occurred while getting the product" });
   }
 });
 
-
 /**
  * @desc Créer un produit (admin)
  * @route POST /products
+ * @access Admin
  * body: { name, brand?, description?, price, is_limited?, url?, images?: string[], sizes?: (string|{label,stock})[] }
  */
 router.post("/", auth, adminOnly, async (req, res) => {
   try {
-    let {
-      name,
-      brand = null,
-      description = "",
-      price,
-      is_limited = false,
-      url,                 // ex: "/img/shoes/3.jpg"
-      images = [],         // si vide, on dérive depuis url
-      sizes,               // si vide/absent => DEFAULT_SIZES
-    } = req.body || {};
+    const { name, brand = null, description = "", price, is_limited = false, images = [] } = req.body || {};
 
     if (!name || price === undefined) {
       return res.status(400).json({ message: "name and price are required" });
     }
 
-    // Map simple: si url fourni et pas d'images => images = [url]
-    if ((!Array.isArray(images) || images.length === 0) && typeof url === "string" && url.trim()) {
-      images = [url.trim()];
-    }
-
-    // 1) Création du produit (sans tailles)
     const created = await createProduct({
       name,
       brand,
@@ -114,21 +99,7 @@ router.post("/", auth, adminOnly, async (req, res) => {
       images: Array.isArray(images) ? images : [],
     });
 
-    const productId = created.id;
-
-    // 2) Ajout des tailles :
-    //    - si `sizes` absent/vides -> DEFAULT_SIZES
-    //    - supporte formats: ["EU 42", ...] ou [{label, stock}, ...]
-    let sizesToInsert = [];
-    if (Array.isArray(sizes) && sizes.length) {
-      sizesToInsert = sizes;
-    } else {
-      sizesToInsert = DEFAULT_SIZES;
-    }
-
-    await addManySizes(productId, sizesToInsert); // ⬅️ AJOUT EFFECTIF
-
-    return res.status(201).json({ message: "Product created", data: { id: productId } });
+    return res.status(201).json({ message: "Product created", data: created });
   } catch (e) {
     console.error("Create product failed:", e);
     return res.status(500).json({ message: "An error occurred while creating the product" });
@@ -137,7 +108,9 @@ router.post("/", auth, adminOnly, async (req, res) => {
 
 /**
  * @desc Mettre à jour un produit (admin)
- * ...
+ * @route PUT /products/:id
+ * @access Admin
+ * body: { name?, brand?, description?, price?, is_limited? }
  */
 router.put("/:id", auth, adminOnly, async (req, res) => {
   const id = req.params.id;
@@ -157,14 +130,15 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
     if (result.affectedRows === 0) return res.status(404).json({ message: "Product not found or no changes" });
     res.json({ status: 200, message: `Product ${id} updated`, data: result });
   } catch (e) {
-    console.error(e);
+    console.error("Update product failed:", e);
     res.status(500).json({ message: "An error occurred while updating the product" });
   }
 });
 
 /**
  * @desc Supprimer un produit (admin)
- * ...
+ * @route DELETE /products/:id
+ * @access Admin
  */
 router.delete("/:id", auth, adminOnly, async (req, res) => {
   const id = req.params.id;
@@ -175,7 +149,7 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
     if (result.affectedRows === 0) return res.status(404).json({ message: "Product not found" });
     res.json({ status: 200, message: `Product ${id} deleted`, data: result });
   } catch (e) {
-    console.error(e);
+    console.error("Delete product failed:", e);
     res.status(500).json({ message: "An error occurred while deleting the product" });
   }
 });

@@ -203,7 +203,7 @@ export async function updateOrderStatus(orderId, nextStatus) {
 export async function cancelOrder(orderId) {
   const conn = await db.getConnection();
   try {
-    await conn.beginTransaction();
+    await conn.beginTransaction();//!
 
     const [[ord]] = await conn.query(
       `SELECT status FROM orders WHERE id = ? FOR UPDATE`,

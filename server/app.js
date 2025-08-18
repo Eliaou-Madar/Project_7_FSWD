@@ -57,8 +57,8 @@ apiRouter.use("/products", productsRouter);
 apiRouter.use("/cart", cartsRouter);
 apiRouter.use("/orders", ordersRouter);
 apiRouter.use("/reviews", reviewsRouter);
-
 apiRouter.use("/promotions", promotionsRouter);
+
 import adminOrdersRouter from "./routes/admin.orders.js";
 app.use(
   "/api/admin",

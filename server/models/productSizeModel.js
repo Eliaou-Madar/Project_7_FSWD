@@ -36,29 +36,32 @@ async function sizeExists(productId, label) {
 
 export async function listSizes(productId) {
   const [rows] = await db.query(
-    `SELECT id, size_label AS label, stock_qty AS stock
+    `SELECT id, size_label, stock_qty
      FROM product_sizes
      WHERE product_id = ?
      ORDER BY id ASC`,
     [productId]
   );
-  return rows;
+  return rows; // [{id, size_label, stock_qty}, ...]
 }
 
 /** Ajoute UNE taille, avec contrôle de doublon. */
 export async function addSize(productId, { label, stock = 0 }) {
   const norm = normalizeSize({ label, stock });
   if (!norm) throw new Error("invalid_size");
+
   if (await sizeExists(productId, norm.label)) {
     const err = new Error("size_already_exists");
     err.code = "size_already_exists";
     throw err;
   }
+
   const [res] = await db.query(
-    `INSERT INTO product_sizes (product_id, size_label, stock_qty) VALUES (?, ?, ?)`,
+    `INSERT INTO product_sizes (product_id, size_label, stock_qty)
+     VALUES (?, ?, ?)`,
     [productId, norm.label, Number(norm.stock)]
   );
-  return { id: res.insertId, product_id: productId, label: norm.label, stock: Number(norm.stock) };
+  return { id: res.insertId, product_id: productId, size_label: norm.label, stock_qty: Number(norm.stock) };
 }
 
 /** Met à jour label/stock d'une taille. */
@@ -100,21 +103,38 @@ export async function deleteSize(id) {
 /** Ajoute plusieurs tailles.
  *  - Accepte ["EU 40", "EU 41"] ou [{label, stock}, ...]
  *  - Ignore silencieusement les doublons déjà présents
- *  - Retourne { inserted: number, skipped: number, details: {added:[], skipped:[]} }
+ *  - Retourne { inserted, skipped, details: { added:[], skipped:[] } }
  */
 export async function addManySizes(productId, sizes = []) {
-  for (const s of sizes) {
-    const label = typeof s === "string" ? s : String(s?.label ?? s?.size_label ?? "").trim();
-    const stock = Number(typeof s === "string" ? (s.stock ?? 10) : (s.stock ?? s.stock_qty ?? 10));
-    if (!label) continue;
-    try {
-      await db.query(
-        `INSERT INTO product_sizes (product_id, size_label, stock_qty)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE size_label = size_label`,
-        [productId, label, Number.isFinite(stock) ? stock : 0]
-      );
-    } catch { /* ignore */ }
-  }
-}
+  const result = { inserted: 0, skipped: 0, details: { added: [], skipped: [] } };
+  if (!Array.isArray(sizes) || !sizes.length) return result;
 
+  for (const s of sizes) {
+    const norm = normalizeSize(s);
+    if (!norm) { result.skipped++; continue; }
+
+    try {
+      const exists = await sizeExists(productId, norm.label);
+      if (exists) {
+        result.skipped++;
+        result.details.skipped.push(norm.label);
+        continue;
+      }
+
+      const [res] = await db.query(
+        `INSERT INTO product_sizes (product_id, size_label, stock_qty)
+         VALUES (?, ?, ?)`,
+        [productId, norm.label, Number(norm.stock)]
+      );
+
+      result.inserted++;
+      result.details.added.push({ id: res.insertId, label: norm.label, stock: Number(norm.stock) });
+    } catch {
+      // on ignore les erreurs ponctuelles pour ne pas bloquer tout le batch
+      result.skipped++;
+      result.details.skipped.push(norm.label);
+    }
+  }
+
+  return result;
+}

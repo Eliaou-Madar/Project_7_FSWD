@@ -1,0 +1,138 @@
+/* src/components/Auth/UserInfoForm.css */
+:root{
+  --sr-bg: #ffffff;
+  --sr-text: #111827;      /* gray-900 */
+  --sr-muted: #6b7280;     /* gray-500 */
+  --sr-border: #e5e7eb;    /* gray-200 */
+  --sr-accent: #111111;    /* SneakRush noir */
+  --sr-accent-2: #2563eb;  /* bleu pour focus */
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --sr-bg:#0b0b0b;
+    --sr-text:#f3f4f6;
+    --sr-muted:#9ca3af;
+    --sr-border:#1f2937;
+    --sr-accent:#ffffff;
+  }
+}
+
+/* Overlay plein écran */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+/* Carte du modal */
+.modal{
+  width: 100%;
+  max-width: 520px;
+  background: var(--sr-bg);
+  color: var(--sr-text);
+  border: 1px solid var(--sr-border);
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  animation: modal-pop .18s ease-out;
+}
+
+@keyframes modal-pop{
+  from{ transform: translateY(6px) scale(.98); opacity: 0; }
+  to{ transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Titres */
+.modal h3{
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+.modal h4{
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--sr-muted);
+}
+
+/* Formulaire */
+.modal form{
+  display: grid;
+  gap: 10px;
+}
+
+/* Champs */
+.modal input{
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--sr-border);
+  background: var(--sr-bg);
+  color: var(--sr-text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  box-sizing: border-box;
+}
+
+.modal input::placeholder{
+  color: var(--sr-muted);
+}
+
+/* Focus ring propre */
+.modal input:focus{
+  border-color: var(--sr-accent-2);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, .15); /* bleu doux */
+}
+
+/* Boutons */
+.modal-buttons{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.modal-buttons button{
+  appearance: none;
+  border: 0;
+  border-radius: 9999px;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform .06s ease, opacity .15s ease, background .15s ease;
+  background: #f3f4f6;   /* gray-100 */
+  color: #111827;
+}
+
+.modal-buttons button:hover{ opacity: .95; transform: translateY(-1px); }
+.modal-buttons button:active{ transform: translateY(0); }
+
+/* Bouton primaire = Save */
+.modal-buttons button[type="submit"]{
+  background: var(--sr-accent);
+  color: #fff;
+}
+
+@media (max-width: 420px){
+  .modal{
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .modal-buttons{
+    gap: 8px;
+  }
+  .modal-buttons button{
+    padding: 10px 12px;
+  }
+}
