@@ -1,0 +1,84 @@
+.products-page {
+  padding: 24px 16px;
+}
+
+.products-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.products-filters {
+  margin-left: auto;           /* pousse à droite en desktop */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.products-filters input,
+.products-filters select {
+  height: 40px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--bg-elev);
+  color: var(--text);
+  min-width: 90px;
+}
+
+.products-filters input::placeholder {
+  color: var(--muted);
+}
+
+.products-filters button {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: var(--primary);
+  color: #1a1a1a;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.products-filters button:hover { transform: translateY(-1px); }
+
+.products-filters .ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: rgba(255,255,255,.16);
+}
+.products-filters .ghost:hover {
+  background: rgba(255,255,255,.06);
+}
+
+/* Grille produits centrée et fluide */
+.products-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+/* États centrés */
+.products-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40vh;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+/* Mobile: aligne les filtres au centre */
+@media (max-width: 768px) {
+  .products-filters {
+    margin-left: 0;
+    justify-content: center;   /* centre horizontalement */
+  }
+  .products-header {
+    justify-content: center;
+  }
+}

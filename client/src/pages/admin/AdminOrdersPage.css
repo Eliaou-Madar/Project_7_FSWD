@@ -44,35 +44,11 @@
   text-transform: capitalize;
 }
 
-.order-status.pending {
-  background: #fff8e1;
-  color: #8d6e00;
-  border: 1px solid #ffecb3;
-}
-
-.order-status.paid {
-  background: #e8f5e9;
-  color: #256029;
-  border: 1px solid #c8e6c9;
-}
-
-.order-status.shipped {
-  background: #e3f2fd;
-  color: #0d47a1;
-  border: 1px solid #bbdefb;
-}
-
-.order-status.completed {
-  background: #f1f8e9;
-  color: #33691e;
-  border: 1px solid #dcedc8;
-}
-
-.order-status.cancelled {
-  background: #ffebee;
-  color: #b71c1c;
-  border: 1px solid #ffcdd2;
-}
+.order-status.pending { background: #fff8e1; color: #8d6e00; border: 1px solid #ffecb3; }
+.order-status.paid { background: #e8f5e9; color: #256029; border: 1px solid #c8e6c9; }
+.order-status.shipped { background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; }
+.order-status.completed { background: #f1f8e9; color: #33691e; border: 1px solid #dcedc8; }
+.order-status.cancelled { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
 
 .order-actions {
   display: flex;
@@ -84,4 +60,58 @@
 .order-actions button {
   font-size: 13px;
   padding: 4px 10px;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+/* ≤1024px : aère la liste */
+@media (max-width: 1024px) {
+  .orders-list { gap: 10px; }
+  .order-card { gap: 10px; }
+}
+
+/* ≤768px : réduit un peu la typo et espace */
+@media (max-width: 768px) {
+  .order-head { font-size: 14px; }
+  .order-sub { font-size: 12.5px; }
+  .order-items { font-size: 12px; }
+  .order-actions button { font-size: 12.5px; }
+}
+
+/* ≤640px : empile la carte, actions en ligne pleine largeur */
+@media (max-width: 640px) {
+  .order-card {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .order-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .order-actions button {
+    flex: 1 1 auto;
+  }
+}
+
+/* ≤480px : boutons 100%, textes wrap propres */
+@media (max-width: 480px) {
+  .order-card { padding: 10px; }
+  .order-head { flex-wrap: wrap; row-gap: 4px; }
+  .order-items { word-break: break-word; }
+  .order-actions { flex-direction: column; align-items: stretch; }
+  .order-actions button { width: 100%; }
+}
+
+/* ≤360px : cibles tactiles un peu plus grandes */
+@media (max-width: 360px) {
+  .order-actions button {
+    padding: 6px 12px;
+  }
 }

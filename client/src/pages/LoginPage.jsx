@@ -3,6 +3,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext.jsx";
 import Login from "../components/Auth/Login.jsx";
+import "./LoginPage.css";
 
 export default function LoginPage() {
   const { login } = useContext(AuthContext);
@@ -25,5 +26,13 @@ export default function LoginPage() {
     }
   };
 
-  return <Login onLogin={handleLogin} error={error} />;
+ return (
+    <div className="login-page center-page">
+      <div className="login-card">
+        <h1>Login</h1>
+        <Login onLogin={handleLogin} error={error} />
+        {error && <div className="login-error">{error}</div>}
+      </div>
+    </div>
+  );
 }

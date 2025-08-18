@@ -1,6 +1,6 @@
-// src/components/Auth/Login.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import "./Login.css";
 
 export default function Login({ onLogin, error }) {
   const [email, setEmail] = useState("");
@@ -11,8 +11,8 @@ export default function Login({ onLogin, error }) {
     onLogin(email, password);
   };
 
-  return (
-    <div className="auth-page">
+   return (
+    <div className="auth-page center-page">
       <h2>Sign in to SneakRush</h2>
       {error && <p className="error">{error}</p>}
       <form onSubmit={handleSubmit}>

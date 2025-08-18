@@ -1,0 +1,200 @@
+/* ===== ProductDetailPage.css ===== */
+
+.pdp {
+  padding: 16px;
+  display: grid;
+  gap: 24px;
+  box-sizing: border-box;
+}
+
+/* Layout principal: galerie + infos */
+.pdp-main {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Carte générique */
+.pdp-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* --- Galerie --- */
+.pdp-gallery {
+  display: grid;
+  gap: 12px;
+}
+.pdp-hero {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f7f8fa;
+  display: block;
+}
+.pdp-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+  gap: 8px;
+}
+.pdp-thumb {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f0f2f6;
+  cursor: pointer;
+  border: 1px solid #eee;
+}
+.pdp-thumb.is-active {
+  outline: 2px solid #2d62ff;
+}
+
+/* --- Infos produit --- */
+.pdp-info {
+  display: grid;
+  gap: 14px;
+}
+.pdp-title {
+  margin: 0;
+  font-size: clamp(20px, 2.8vw, 30px);
+  line-height: 1.2;
+}
+.pdp-brand {
+  font-size: 13px;
+  opacity: 0.8;
+}
+.pdp-price {
+  font-weight: 800;
+  font-size: 20px;
+}
+
+/* Sélecteurs (taille, quantité) */
+.pdp-controls {
+  display: grid;
+  gap: 10px;
+}
+.pdp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;                 /* ⚡ évite l’empiètement */
+}
+
+.pdp-select,
+.pdp-input {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.pdp-select {
+  min-width: 180px;
+  max-width: 100%;
+}
+
+.pdp-qty-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pdp-btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #f8f9fb;
+  cursor: pointer;
+}
+.pdp-input {
+  width: 64px;
+  text-align: center;
+}
+
+/* Boutons d’action */
+.pdp-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;                 /* ⚡ passe à la ligne si manque de place */
+}
+.pdp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #f8f9fb;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+.pdp-btn:hover { background: #eef1f6; }
+.pdp-btn.primary {
+  border: none;
+  background: #2d62ff;
+  color: #fff;
+}
+.pdp-btn.primary:hover { background: #1b4fe0; }
+.pdp-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Description */
+.pdp-desc {
+  color: #333;
+  line-height: 1.55;
+}
+
+/* --- Avis (section) --- */
+.pdp-reviews {
+  border-top: 1px solid #eee;
+  padding-top: 16px;
+}
+.pdp-reviews .pdp-card {
+  padding: 0;
+  border: none;
+}
+
+/* Skeleton / states simples */
+.pdp-status-error {
+  color: crimson;
+}
+.pdp-status-loading {
+  color: #666;
+}
+
+/* ===== Responsif ===== */
+@media (max-width: 960px) {
+  .pdp-main {
+    grid-template-columns: 1fr;   /* pile galerie + infos */
+  }
+}
+
+/* Sticky actions en très petit écran */
+@media (max-width: 520px) {
+  .pdp-actions {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding: 10px 8px;
+    margin: 0 -8px;
+    border-top: 1px solid #eee;
+    z-index: 5;
+  }
+  .pdp-btn.primary {
+    flex: 1 1 auto;               /* bouton principal plein largeur */
+  }
+}

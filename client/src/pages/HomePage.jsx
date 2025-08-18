@@ -23,13 +23,11 @@ function promoLabel(p) {
 }
 
 export default function HomePage() {
-  const { userId } = useParams(); // si tu veux des liens protégés
+  const { userId } = useParams(); // if you want protected links
   const [promos, setPromos] = useState([]);
   const [latest, setLatest] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-
-  
 
   useEffect(() => {
     let cancel = false;
@@ -50,7 +48,7 @@ export default function HomePage() {
       .then(([pp, pr]) => {
         if (cancel) return;
 
-        // Tri des promos: % > montant, puis date plus récente
+        // Sort promos: % > fixed amount, then most recent date
         pp.sort((a, b) => {
           const score = (x) =>
             (x.type === "percent" ? 1000 : 500) + Number(x.value || 0);
@@ -61,7 +59,7 @@ export default function HomePage() {
           return db - da;
         });
 
-        // Produits déjà triés par l’API, fallback tri date
+        // Products already sorted by API, fallback sort by date
         pr.sort(
           (a, b) =>
             new Date(b.created_at || b.createdAt || 0) -
@@ -88,7 +86,9 @@ export default function HomePage() {
         <div className="hero-copy">
           {hero ? (
             <>
-              <h1 className="hero-title">{promoLabel(hero)} sur la sélection</h1>
+              <h1 className="hero-title">
+                {promoLabel(hero)} on selected items
+              </h1>
               {hero.description && <p className="muted">{hero.description}</p>}
               <div className="row">
                 {hero.code && (
@@ -100,10 +100,10 @@ export default function HomePage() {
             <>
               <h1 className="hero-title">Welcome to SneakRush</h1>
               <p className="muted">
-                Découvrez les nouveautés et nos meilleures offres.
+                Discover the latest arrivals and our best deals.
               </p>
               <Link to="/products">
-                <button className="btn btn-primary">Voir la boutique</button>
+                <button className="btn btn-primary">Browse the shop</button>
               </Link>
             </>
           )}
@@ -111,10 +111,10 @@ export default function HomePage() {
         <div className="hero-art" aria-hidden />
       </section>
 
-      {/* Codes promo actifs */}
+      {/* Active promo codes */}
       {!!promos.length && (
         <section className="promo-strip card">
-          <div className="strip-title">Codes promo actifs</div>
+          <div className="strip-title">Active promo codes</div>
           <div className="strip-scroll">
             {promos.map((p) => (
               <span
@@ -130,12 +130,12 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Articles les plus récents */}
+      {/* Latest products */}
       <section className="home-section">
         <div className="row-spread">
-          <h2>Articles récents</h2>
+          <h2>Latest products</h2>
           <Link to="/products" className="muted">
-            Tout voir →
+            View all →
           </Link>
         </div>
 
@@ -148,14 +148,14 @@ export default function HomePage() {
         ) : err ? (
           <p className="status-error">{err}</p>
         ) : !latest.length ? (
-          <p className="status-empty">Aucun produit pour le moment.</p>
+          <p className="status-empty">No products available at the moment.</p>
         ) : (
           <div className="products-grid">
             {latest.map((p) => (
               <ProductCard
                 key={p.id || p.product_id || p._id}
                 product={p}
-                // Si tu veux des liens protégés type /users/:id/products/:pid, décommente:
+                // If you want protected links like /users/:id/products/:pid, uncomment:
                 // to={`/users/${userId}/products/${p.id}`}
               />
             ))}

@@ -117,3 +117,12 @@ a:hover{ color: var(--primary); }
 @media (max-width: 480px){
   .grid-2, .grid-3, .grid-4{ grid-template-columns: 1fr; }
 }
+
+
+.center-page {
+  min-height: calc(100vh - var(--header-h));
+  display: flex;
+  justify-content: center;   /* centre horizontalement */
+  align-items: center;       /* centre verticalement */
+  padding: 24px;
+}

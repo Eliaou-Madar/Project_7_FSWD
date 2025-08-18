@@ -1,0 +1,89 @@
+.auth-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+
+.auth-page h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* Formulaire */
+.auth-page form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 350px;
+}
+
+.auth-page input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border 0.2s;
+}
+
+.auth-page input:focus {
+  border-color: #0077ff;
+  outline: none;
+}
+
+/* Bouton */
+.auth-page button {
+  background: #0077ff;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.auth-page button:hover {
+  background: #005fcc;
+}
+
+/* Erreur */
+.auth-page .error {
+  color: #d93025;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Lien */
+.auth-page p {
+  font-size: 0.95rem;
+  color: #444;
+  margin-top: 12px;
+}
+
+.auth-page a {
+  color: #0077ff;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.auth-page a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .auth-page h2 {
+    font-size: 1.4rem;
+  }
+
+  .auth-page form {
+    max-width: 100%;
+  }
+}

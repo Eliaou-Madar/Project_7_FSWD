@@ -1,108 +1,141 @@
-.header{
+/* ====== Wrapper header (fixe) ====== */
+.header {
   position: fixed;
-  inset: 0 0 auto 0;
-  height: var(--header-h);          /* défini dans global.css */
+  top: 0; left: 0; right: 0;
   z-index: 1000;
-
-  display:flex; align-items:center;
-  background: linear-gradient(90deg, #111, #1a1c20);
-  color:#fff;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 0 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  background: var(--bg-elev);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 6px 18px rgba(0,0,0,.1);
+  min-height: var(--header-h);
+  display: flex;
+  align-items: center;
 }
 
-/* contenu centré */
-.header > .container{
-  display:flex; align-items:center; justify-content:space-between;
-  width:100%;
+/* ====== Ligne interne ====== */
+.header .container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* logo container */
-.logo { margin: 0; }
+/* ====== Logo ====== */
+.logo {
+  margin: 0;
+  line-height: 0;
+}
 
-/* lien du logo (image + texte) */
-.logo-link{
+.logo-link {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #fff;
-  font-weight: 800;
-  letter-spacing: .2px;
+  color: var(--text);
   text-decoration: none;
 }
 
-/* image du logo : reste compacte dans la hauteur du header */
-/* image du logo : plus grande + coins arrondis */
-.logo-img{
-  height: 60px;                           /* desktop */
-  max-height: calc(var(--header-h) - 14px);
-  width: auto;
-  display: block;
-  object-fit: contain;
-
-  border-radius: 14px;                    /* ⟵ coins arrondis */
-  /* optionnel esthétique */
-  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+.logo-img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 12px;             /* coins arrondis */
+  border: 1px solid rgba(255,255,255,.08);
 }
 
-/* mobile : un peu plus petit mais toujours arrondi */
-@media (max-width: 768px){
-  .logo-img{ height: 36px; }
-  /* si tu veux garder le texte à côté du logo, retire la ligne ci-dessous */
-  .logo-text{ display: none; }
+.logo-text {
+  font-weight: 800;
+  font-size: 1.2rem;               /* un peu plus grand */
+  letter-spacing: .2px;
 }
 
+/* ====== Nav (desktop) ====== */
+.nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 
-.logo a{ color:#fff; font-weight:800; letter-spacing:.2px; }
+.nav a {
+  color: var(--text);
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: background .15s ease, color .15s ease;
+  font-weight: 500;
+}
+.nav a:hover { background: rgba(255,255,255,.06); }
 
-/* Nav (desktop) */
-.nav{ display:flex; align-items:center; gap:10px; }
-.nav a, .nav .logout{
-  color:#eee; text-decoration:none;
-  padding:8px 10px;
-  border-radius:10px;
-  transition: background .15s ease, color .15s ease, transform .15s ease;
+.nav a.active {
+  color: #1a1a1a;
+  background: var(--primary);
+}
+
+/* ====== Bouton logout ====== */
+.logout {
+  margin-left: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
   border: 1px solid transparent;
+  background: var(--primary);
+  color: #1a1a1a;
+  font-weight: 700;
+  cursor: pointer;
+}
+.logout:hover { transform: translateY(-1px); }
+
+/* ====== Burger (mobile) ====== */
+.burger {
+  display: none;
+  margin-left: auto;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
   background: transparent;
   cursor: pointer;
-  font: inherit;
+  position: relative;
 }
-.nav a:hover, .nav .logout:hover{
-  color: var(--primary);
-  background: rgba(255,255,255,.08);
-  transform: translateY(-1px);
+.burger span {
+  position: absolute; left: 8px; right: 8px;
+  height: 2px; background: var(--text);
+  border-radius: 2px;
+  transition: transform .2s ease, opacity .2s ease, top .2s ease;
 }
-.nav a.active{
-  color: var(--primary);
-  background: rgba(255,255,255,.12);
-  border-color: rgba(255,255,255,.16);
-}
+.burger span:nth-child(1){ top: 12px; }
+.burger span:nth-child(2){ top: 19px; }
+.burger span:nth-child(3){ top: 26px; }
+.burger.is-open span:nth-child(1){ top: 19px; transform: rotate(45deg); }
+.burger.is-open span:nth-child(2){ opacity: 0; }
+.burger.is-open span:nth-child(3){ top: 19px; transform: rotate(-45deg); }
 
-/* Burger (mobile) */
-.burger{
-  display:none;
-  width:40px; height:40px; border:0; background:transparent; cursor:pointer; position:relative;
-}
-.burger span{
-  position:absolute; left:8px; right:8px; height:2px; background:#fff;
-  transition: transform .2s, opacity .2s; border-radius:2px;
-}
-.burger span:nth-child(1){ top:12px; }
-.burger span:nth-child(2){ top:19px; }
-.burger span:nth-child(3){ top:26px; }
-.burger.is-open span:nth-child(1){ transform: translateY(7px) rotate(45deg); }
-.burger.is-open span:nth-child(2){ opacity:0; }
-.burger.is-open span:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
-
-/* Mobile: nav en panneau */
-@media (max-width: 768px){
-  .burger{ display:block; }
-  .nav{
-    position: fixed; top: calc(var(--header-h) + 8px); right: 8px; left: 8px;
-    display:none; flex-direction:column; gap:6px; padding:12px;
-    background: var(--bg-elev); border:1px solid rgba(255,255,255,.08);
-    border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+/* ====== Mobile layout ====== */
+@media (max-width: 900px){
+  .burger { display: inline-block; }
+  .nav {
+    position: absolute;
+    top: calc(var(--header-h) - 1px);
+    left: 0; right: 0;
+    background: var(--bg-elev);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: none;                 /* caché par défaut */
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px;
+    gap: 6px;
   }
-  .nav.nav--open{ display:flex; }
+  .nav.nav--open { display: flex; }
+
+  .nav a, .logout {
+    width: 100%;
+    text-align: center;
+    padding: 10px 12px;
+  }
+}
+
+/* Petites retouches très petites résolutions */
+@media (max-width: 480px){
+  .logo-img { width: 38px; height: 38px; }
+  .logo-text { font-size: 1.1rem; }
 }

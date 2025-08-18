@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
 import { userProfilesService } from "../services/userProfiles.service";
 import ProfileForm from "../components/Account/ProfileForm.jsx";
+import "./AccountPage.css";
 
 export default function AccountPage() {
   const { user } = useContext(AuthContext);   // route déjà protégée
@@ -15,7 +16,6 @@ export default function AccountPage() {
     preferences: { size: "", favoriteBrand: "" },
   });
 
-  // 🔄 charge user + profile depuis l'API
   useEffect(() => {
     let cancel = false;
     const load = async () => {
@@ -24,7 +24,6 @@ export default function AccountPage() {
       try {
         const { user: u, profile: p } = await userProfilesService.getByUserId(userId);
         if (cancel) return;
-
         setInitialValues({
           firstname: u?.first_name ?? "",
           lastname:  u?.last_name ?? "",
@@ -54,7 +53,6 @@ export default function AccountPage() {
     if (!userId) return;
     setStatus({ type: "", msg: "" });
     try {
-      // mappe vers le payload attendu par PUT /api/users/:id
       const payload = {
         first_name: formData.firstname,
         last_name:  formData.lastname,
@@ -69,13 +67,9 @@ export default function AccountPage() {
           size:          formData.preferences?.size ?? "",
           favoriteBrand: formData.preferences?.favoriteBrand ?? "",
         },
-        // optionnel: name combiné pour full_name côté profil
         name: `${formData.firstname || ""} ${formData.lastname || ""}`.trim(),
       };
-
       const { user: u, profile: p } = await userProfilesService.updateByUserId(userId, payload);
-
-      // rafraîchit les champs affichés après update
       setInitialValues({
         firstname: u?.first_name ?? "",
         lastname:  u?.last_name ?? "",
@@ -91,7 +85,6 @@ export default function AccountPage() {
           favoriteBrand: p?.pref_favorite_brand ?? "",
         },
       });
-
       setStatus({ type: "success", msg: "Profile updated ✅" });
     } catch {
       setStatus({ type: "error", msg: "Update failed ❌" });
@@ -101,31 +94,35 @@ export default function AccountPage() {
   if (!user) return null;
 
   return (
-    <div className="account-page" style={{ padding: 16 }}>
-      <h1>My Account</h1>
-      <p style={{ opacity: 0.8 }}>
-        Signed in as <strong>{user.email}</strong>
-      </p>
+    <div className="account-page">
+      <div className="account-wrap">
+        <header className="account-header">
+          <h1>My Account</h1>
+          <p className="account-meta">
+            Signed in as <strong>{user.email}</strong>
+          </p>
+        </header>
 
-      {status.msg && (
-        <div
-          style={{
-            margin: "12px 0",
-            padding: "10px 12px",
-            borderRadius: 8,
-            background: status.type === "success" ? "#e8f7ee" : "#fee",
-            color: status.type === "success" ? "#0a7a3b" : "#a20000",
-          }}
-        >
-          {status.msg}
-        </div>
-      )}
+        {status.msg && (
+          <div
+            className={`account-alert ${
+              status.type === "success" ? "account-alert--success" : "account-alert--error"
+            }`}
+          >
+            {status.msg}
+          </div>
+        )}
 
-      {loading ? (
-        <p>Loading…</p>
-      ) : (
-        <ProfileForm initialValues={initialValues} onSubmit={handleSubmit} />
-      )}
+        {loading ? (
+          <div className="account-loading">Loading…</div>
+        ) : (
+          <div className="account-body">
+            <div className="account-card">
+              <ProfileForm initialValues={initialValues} onSubmit={handleSubmit} />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

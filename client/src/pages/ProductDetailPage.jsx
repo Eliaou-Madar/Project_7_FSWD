@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import ProductDetail from "../components/Products/ProductDetail.jsx";
 import { productsService } from "../services/products.service";
 import ReviewsSection from "../components/Reviews/ReviewsSection.jsx";
+import "./ProductDetailPage.css";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -23,16 +24,17 @@ export default function ProductDetailPage() {
     return () => { ignore = true; };
   }, [productId]);
 
-  if (err) return <div style={{ color: "crimson" }}>Error: {err}</div>;
-  if (!product) return <div>Loading…</div>;
+   if (err) return <div className="pdp-status-error">Error: {err}</div>;
+  if (!product) return <div className="pdp-status-loading">Loading…</div>;
 
   return (
-    <div style={{ padding: 16, display: "grid", gap: 24 }}>
-      {/* Détail produit */}
-      <ProductDetail product={product} />
+    <div className="pdp">
+      <div className="pdp-main">
+        {/* Tu peux faire en sorte que ProductDetail rende .pdp-gallery + .pdp-info */}
+        <ProductDetail product={product} />
+      </div>
 
-      {/* Avis du produit — même page */}
-      <div style={{ borderTop: "1px solid #eee", paddingTop: 12 }}>
+      <div className="pdp-reviews">
         <ReviewsSection productId={productId} />
       </div>
     </div>

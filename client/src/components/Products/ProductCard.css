@@ -1,0 +1,159 @@
+/* ==== ProductCard.css ==== */
+
+/* Carte conteneur */
+.pc-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  display: grid;
+  gap: 10px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Lien global (titre + image) */
+.pc-link {
+  color: inherit;
+  text-decoration: none;
+  display: grid;
+  gap: 6px;
+}
+
+/* Image produit */
+.pc-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+/* Titre + marque */
+.pc-title {
+  margin: 8px 0 4px;
+  font-size: 15px;
+  line-height: 1.25;
+}
+.pc-brand {
+  opacity: 0.8;
+  font-size: 12px;
+}
+
+/* Bloc tailles */
+.pc-sizes {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+.pc-sizes label {
+  font-size: 13px;
+  opacity: 0.9;
+}
+.pc-sizes select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Pied de carte: prix + contrôles */
+.pc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;           /* ⚡ empêche l’empiètement */
+}
+
+/* Prix */
+.pc-price {
+  font-weight: 700;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Groupe quantité + boutons */
+.pc-qty-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;           /* ⚡ passe à la ligne si besoin */
+  flex: 1 1 auto;            /* prend la place disponible */
+  justify-content: flex-end; /* reste à droite quand il y a de la place */
+  min-width: 220px;          /* évite la casse trop tôt */
+}
+
+/* Boutons génériques */
+.pc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f8f9fb;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.pc-btn:hover { background: #eef1f6; }
+
+/* Petits boutons +/- */
+.pc-btn-icon {
+  width: 32px;
+  height: 34px;
+  padding: 0;
+}
+
+/* Input quantité */
+.pc-qty-input {
+  width: 56px;
+  height: 34px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* Bouton "Add" */
+.pc-add {
+  border: none;
+  background: #2d62ff;
+  color: #fff;
+  height: 34px;
+  padding: 0 14px;
+  font-weight: 700;
+}
+.pc-add:hover { background: #1b4fe0; }
+.pc-add:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* État "chargement tailles" */
+.pc-sizes-loading {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #a00;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  .pc-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pc-qty-group {
+    justify-content: space-between;
+    min-width: 0;
+  }
+  .pc-add {
+    width: 100%;           /* bouton Add plein largeur en mobile */
+  }
+}

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { productsService } from "../../services/products.service";
+import "./ProductCard.css";
 
 const DATA_URI_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
@@ -122,58 +123,57 @@ export default function ProductCard({ product, to }) {
   };
 
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
-      <Link to={href} style={{ color: "inherit", textDecoration: "none" }}>
+    <div className="pc-card">
+      <Link to={href} className="pc-link">
         <img
+          className="pc-img"
           src={src || DATA_URI_PIXEL}
           alt={name}
           loading="lazy"
           onError={() => setSrc(PROJECT_FALLBACK)}
-          style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 8 }}
         />
-        <h3 style={{ margin: "8px 0 4px" }}>{name}</h3>
-        {brand ? <div style={{ opacity: 0.8, fontSize: 12 }}>{brand}</div> : null}
+        <h3 className="pc-title">{name}</h3>
+        {brand ? <div className="pc-brand">{brand}</div> : null}
       </Link>
 
       {sizes.length > 0 ? (
-        <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
-          <label style={{ fontSize: 13, opacity: 0.9 }}>Taille</label>
+        <div className="pc-sizes">
+          <label>Size</label>
           <select
+            className="pdp-select pc-select"
             value={selectedSizeId ?? ""}
             onChange={(e) => setSelectedSizeId(Number(e.target.value) || null)}
-            style={{ padding: "6px 8px", borderRadius: 8, border: "1px solid #ddd" }}
           >
             {sizes.map((s) => {
               const out = (s.stock ?? 1) <= 0;
               return (
                 <option key={s.id} value={s.id} disabled={out}>
-                  {s.label} {out ? "(épuisé)" : s.stock != null ? `(stock: ${s.stock})` : ""}
+                  {s.label} {out ? "(out of stock)" : s.stock != null ? `(stock: ${s.stock})` : ""}
                 </option>
               );
             })}
           </select>
         </div>
       ) : (
-        <div style={{ marginTop: 8, fontSize: 12, color: "#a00" }}>
-          Chargement des tailles…
-        </div>
+        <div className="pc-sizes-loading">Loading sizes…</div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 10 }}>
-        <strong>{priceText}</strong>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <button type="button" onClick={dec} style={{ width: 28 }}>-</button>
+      <div className="pc-foot">
+        <strong className="pc-price">{priceText}</strong>
+        <div className="pc-qty-group">
+          <button type="button" className="pc-btn pc-btn-icon" onClick={dec}>−</button>
           <input
+            className="pc-qty-input"
             type="number"
             min={1}
             max={99}
             value={qty}
             onChange={(e) => setQtyLocal(Math.max(1, Math.min(99, Number(e.target.value) || 1)))}
-            style={{ width: 48, textAlign: "center" }}
           />
-          <button type="button" onClick={inc} style={{ width: 28 }}>+</button>
+          <button type="button" className="pc-btn pc-btn-icon" onClick={inc}>+</button>
           <button
             type="button"
+            className="pc-btn pc-add"
             onClick={onAdd}
             disabled={basePrice == null || !selectedSizeId || sizes.length === 0}
           >
