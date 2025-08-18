@@ -44,8 +44,6 @@ export default function CartPage() {
       <header style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <h1 style={{ margin: 0 }}>Your Cart</h1>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <button onClick={() => setShowDebug((s) => !s)}>Debug</button>
-          <button onClick={refresh} disabled={loading}>Refresh</button>
           {!!items.length && (
             <button onClick={clear} disabled={loading}>Clear cart</button>
           )}

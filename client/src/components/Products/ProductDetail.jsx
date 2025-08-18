@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { productsService } from "../../services/products.service";
 
-/* Helpers image */
+/* ---------------- Image helpers ---------------- */
 const DATA_URI_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
 const PROJECT_FALLBACK = "/img/placeholder.jpg";
@@ -28,7 +28,7 @@ function mainImage(product) {
   return null;
 }
 
-/* Tailles */
+/* ---------------- Sizes helpers ---------------- */
 function mapSizeRow(s) {
   const id = Number(s.product_size_id ?? s.size_id ?? s.id ?? s.ps_id ?? s.psid ?? NaN);
   if (!Number.isInteger(id) || id <= 0) return null;
@@ -44,16 +44,25 @@ function mapSizeRow(s) {
     const n = Number(stockRaw);
     stock = Number.isFinite(n) ? n : null;
   }
+  // si backend renvoie juste "available"
   if (stock === null && (s.available === true || s.is_available === true)) {
-    stock = 999; // “dispo” inconnu => on considère dispo
+    stock = 999; // inconnu mais disponible
   }
 
   return { id, label, stock };
 }
+
 function normalizeSizesFromProduct(product) {
-  const raw = Array.isArray(product?.sizes) ? product.sizes : [];
+  // accepte product.sizes OU product.product_sizes
+  const raw = Array.isArray(product?.sizes)
+    ? product.sizes
+    : Array.isArray(product?.product_sizes)
+    ? product.product_sizes
+    : [];
   return raw.map(mapSizeRow).filter(Boolean);
 }
+
+/* ============================================================= */
 
 export default function ProductDetail({ product }) {
   const { add: addCart, setQty, items } = useCart();
@@ -69,12 +78,12 @@ export default function ProductDetail({ product }) {
     return typeof p === "string" ? Number(p) : p;
   }, [product]);
 
-  // Image principale
+  /* Image principale */
   const candidate = cleanUrl(mainImage(product)) || PROJECT_FALLBACK;
   const [displaySrc, setDisplaySrc] = useState(candidate);
   useEffect(() => setDisplaySrc(candidate), [candidate]);
 
-  // Tailles (depuis le produit, avec lazy-load si nécessaire)
+  /* Tailles (depuis le produit, puis lazy-load si besoin) */
   const initialSizes = useMemo(() => normalizeSizesFromProduct(product), [product]);
   const [sizes, setSizes] = useState(initialSizes);
 
@@ -91,22 +100,32 @@ export default function ProductDetail({ product }) {
       }
     }
     fetchFull();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [productId, sizes.length]);
 
+  /* Sélection de taille (toujours une taille valide si possible) */
   const defaultSizeId =
     sizes.find((s) => (s.stock ?? 1) > 0)?.id ?? sizes[0]?.id ?? null;
   const [selectedSizeId, setSelectedSizeId] = useState(defaultSizeId);
-  useEffect(() => { setSelectedSizeId(defaultSizeId); }, [defaultSizeId]);
+  useEffect(() => {
+    // si la taille sélectionnée n’existe plus après un refresh, on retombe sur la par défaut
+    if (!sizes.some((s) => s.id === selectedSizeId)) {
+      setSelectedSizeId(defaultSizeId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sizes, defaultSizeId]);
 
-  // Quantité
+  /* Quantité */
   const [qty, setQtyLocal] = useState(1);
   const inc = () => setQtyLocal((q) => Math.min(99, q + 1));
   const dec = () => setQtyLocal((q) => Math.max(1, q - 1));
 
-  // Galerie secondaire
+  /* Galerie secondaire */
   const gallery = Array.isArray(product.images) ? product.images.slice(1) : [];
 
+  /* Add to cart avec product_size_id */
   const onAdd = async () => {
     const n = Math.max(1, Number(qty) || 1);
     const sizeId = Number(selectedSizeId);
@@ -114,13 +133,20 @@ export default function ProductDetail({ product }) {
       alert("Choisis une taille valide.");
       return;
     }
+    // désactive si la taille est explicitement épuisée
+    const selected = sizes.find((s) => s.id === sizeId);
+    if (selected && (selected.stock ?? 1) <= 0) {
+      alert("Cette taille est épuisée.");
+      return;
+    }
+
     try {
-      // ✅ Backend attend product_size_id
+      // ✅ Le backend attend product_size_id (voir cartService.add)
       await addCart(sizeId, n);
     } catch (err) {
       const status = err?.response?.status;
       if (status === 409) {
-        // déjà présent → incrément
+        // déjà présent → on incrémente proprement
         const existing = items.find((it) => Number(it.id) === sizeId);
         const nextQty = (existing?.qty ?? 0) + n;
         await setQty(sizeId, nextQty);
@@ -156,7 +182,10 @@ export default function ProductDetail({ product }) {
                   width={96}
                   height={96}
                   style={{ objectFit: "cover", borderRadius: 8 }}
-                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DATA_URI_PIXEL; }}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = DATA_URI_PIXEL;
+                  }}
                 />
               );
             })}
@@ -167,7 +196,11 @@ export default function ProductDetail({ product }) {
       {/* Détails */}
       <div style={{ display: "grid", gap: 12 }}>
         <h1 style={{ margin: 0 }}>{name}</h1>
-        {brand ? <div style={{ opacity: 0.85 }}>Marque : <strong>{brand}</strong></div> : null}
+        {brand ? (
+          <div style={{ opacity: 0.85 }}>
+            Marque : <strong>{brand}</strong>
+          </div>
+        ) : null}
         {product.description ? <p style={{ opacity: 0.9 }}>{product.description}</p> : null}
         <strong style={{ fontSize: 22 }}>{price != null ? `${price} €` : "—"}</strong>
 
@@ -214,7 +247,7 @@ export default function ProductDetail({ product }) {
           </div>
           <button
             onClick={onAdd}
-            disabled={price == null || !selectedSizeId || sizes.length === 0}
+            disabled={price == null || !selectedSizeId || sizes.length === 0 || (sizes.find(s => s.id === selectedSizeId)?.stock ?? 1) <= 0}
             style={{ marginLeft: 8 }}
           >
             Add to cart

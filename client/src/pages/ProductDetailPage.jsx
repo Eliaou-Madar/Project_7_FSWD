@@ -1,13 +1,14 @@
-// client/src/pages/ProductDetailPage.jsx
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ProductDetail from "../components/Products/ProductDetail.jsx";
 import { productsService } from "../services/products.service";
+import ReviewsSection from "../components/Reviews/ReviewsSection.jsx";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [err, setErr] = useState("");
+  const productId = Number(id);
 
   useEffect(() => {
     let ignore = false;
@@ -15,20 +16,25 @@ export default function ProductDetailPage() {
     setProduct(null);
 
     productsService
-      .getById(id)
-      .then((p) => {
-        if (!ignore) setProduct(p);
-      })
-      .catch((e) => {
-        if (!ignore) setErr(String(e.message || e));
-      });
+      .getById(productId)
+      .then((p) => !ignore && setProduct(p))
+      .catch((e) => !ignore && setErr(String(e.message || e)));
 
-    return () => {
-      ignore = true;
-    };
-  }, [id]);
+    return () => { ignore = true; };
+  }, [productId]);
 
-  if (err) return <div style={{ color: "crimson" }}>Erreur: {err}</div>;
+  if (err) return <div style={{ color: "crimson" }}>Error: {err}</div>;
   if (!product) return <div>Loading…</div>;
-  return <ProductDetail product={product} />;
+
+  return (
+    <div style={{ padding: 16, display: "grid", gap: 24 }}>
+      {/* Détail produit */}
+      <ProductDetail product={product} />
+
+      {/* Avis du produit — même page */}
+      <div style={{ borderTop: "1px solid #eee", paddingTop: 12 }}>
+        <ReviewsSection productId={productId} />
+      </div>
+    </div>
+  );
 }

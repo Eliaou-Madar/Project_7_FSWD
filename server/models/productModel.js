@@ -63,6 +63,32 @@ export async function listProducts({
   const [rows] = await db.query(sql, [...params, Number(limit), Number(offset)]);
   return rows;
 }
+/** Tailles par défaut (modifiable) */
+const DEFAULT_SIZES = [
+  { label: "EU 40", stock: 10 },
+  { label: "EU 41", stock: 10 },
+  { label: "EU 42", stock: 10 },
+  { label: "EU 43", stock: 10 },
+  { label: "EU 44", stock: 10 },
+  { label: "EU 45", stock: 10 },
+];
+
+function normalizeSizes(sizes) {
+  // Accepte: ["EU 42", "EU 43"] OU [{label, stock}]
+  if (!Array.isArray(sizes) || !sizes.length) return [];
+  return sizes
+    .map((s) => {
+      if (typeof s === "string") return { label: s, stock: 10 };
+      if (s && typeof s === "object") {
+        const label = String(s.label ?? s.size_label ?? "").trim();
+        const stock = Number(s.stock ?? s.stock_qty ?? 0);
+        if (!label) return null;
+        return { label, stock: Number.isFinite(stock) ? stock : 0 };
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
 
 /* ----------- Obtenir un produit avec images + tailles ----------- */
 export async function getProductById(id) {
@@ -90,7 +116,7 @@ export async function getProductById(id) {
 
 
 /* ----------- Créer un produit (transaction) ----------- */
-export async function createProduct({ name, brand, description, price, is_limited = false, images = [], sizes = [] }) {
+export async function createProduct({ name, brand, description, price, is_limited = false, images = [] }) {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
@@ -102,14 +128,29 @@ export async function createProduct({ name, brand, description, price, is_limite
     );
     const productId = res.insertId;
 
-    if (images.length) {
-      const values = images.map(url => [productId, url]);
-      await conn.query(`INSERT INTO product_images (product_id, url) VALUES ?`, [values]);
+    if (Array.isArray(images) && images.length) {
+      const values = images.filter(Boolean).map((url) => [productId, url]);
+      if (values.length) {
+        await conn.query(`INSERT INTO product_images (product_id, url) VALUES ?`, [values]);
+      }
     }
 
-    if (sizes.length) {
-      const values = sizes.map(s => [productId, s.label, s.stock]);
-      await conn.query(`INSERT INTO product_sizes (product_id, size_label, stock_qty) VALUES ?`, [values]);
+    // TAILLES par défaut si non fournies
+    let normalizedSizes = normalizeSizes(sizes);
+    if (!normalizedSizes.length) {
+      normalizedSizes = DEFAULT_SIZES.slice(); // clone
+    }
+
+    if (normalizedSizes.length) {
+      const sizeValues = normalizedSizes.map((s) => [
+        productId,
+        s.label,
+        Number(s.stock ?? 0),
+      ]);
+      await conn.query(
+        `INSERT INTO product_sizes (product_id, size_label, stock_qty) VALUES ?`,
+        [sizeValues]
+      );
     }
 
     await conn.commit();
@@ -121,6 +162,29 @@ export async function createProduct({ name, brand, description, price, is_limite
     conn.release();
   }
 }
+
+export async function replaceProductImages(productId, images = []) {
+  // Sécurise
+  const urls = (Array.isArray(images) ? images : []).filter(Boolean);
+  await db.query(`DELETE FROM product_images WHERE product_id = ?`, [productId]);
+  if (urls.length) {
+    const values = urls.map((u) => [productId, u]);
+    await db.query(`INSERT INTO product_images (product_id, url) VALUES ?`, [values]);
+  }
+}
+
+export async function replaceProductSizes(productId, sizes = []) {
+  const normalized = normalizeSizes(sizes);
+  await db.query(`DELETE FROM product_sizes WHERE product_id = ?`, [productId]);
+  if (normalized.length) {
+    const values = normalized.map((s) => [productId, s.label, Number(s.stock ?? 0)]);
+    await db.query(
+      `INSERT INTO product_sizes (product_id, size_label, stock_qty) VALUES ?`,
+      [values]
+    );
+  }
+}
+
 
 /* ----------- Mettre à jour un produit ----------- */
 export async function updateProduct(id, fields) {
@@ -138,7 +202,10 @@ export async function updateProduct(id, fields) {
   if (!updates.length) return { affectedRows: 0 };
 
   params.push(id);
-  const [res] = await db.query(`UPDATE products SET ${updates.join(", ")} WHERE id = ?`, params);
+  const [res] = await db.query(
+    `UPDATE products SET ${updates.join(", ")} WHERE id = ?`,
+    params
+  );
   return { affectedRows: res.affectedRows };
 }
 

@@ -2,18 +2,19 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
-// Pages (publiques)
+// Pages publiques
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
-
-// Pages (appli protégées)
 import HomePage from "./pages/HomePage.jsx";
 import ProductsPage from "./pages/ProductsPage.jsx";
 import ProductDetailPage from "./pages/ProductDetailPage.jsx";
+
+// Pages protégées
 import CartPage from "./pages/CartPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
 import OrdersPage from "./pages/OrdersPage.jsx";
+import ReviewsPage from "./pages/ReviewsPage.jsx";
 
 // Admin
 import AdminLayout from "./components/admin/AdminLayout.jsx";
@@ -29,14 +30,22 @@ import PrivateAppLayout from "./components/Layout/PrivateAppLayout.jsx";
 export default function Router() {
   return (
     <Routes>
-      {/* Racine -> /login */}
+      {/* ---- PUBLIC ---- */}
+      {/* Si tu veux garder la page de login comme entrée, laisse cette ligne.
+          Sinon, mets <HomePage /> directement en racine */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* Public */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
-      {/* Espace protégé avec préfixe users/:userId/* */}
+      {/* >>> AJOUT: routes produits publiques (cible des <Link to={`/products/:id`}) <<< */}
+      <Route path="/products" element={<ProductsPage />} />
+      <Route path="/products/:id" element={<ProductDetailPage />} />
+
+      {/* Optionnel: une Home publique si tu en as besoin sans auth */}
+      <Route path="/home" element={<HomePage />} />
+
+      {/* ---- PROTECTED APP AREA ---- */}
       <Route
         path="/users/:userId/*"
         element={
@@ -45,10 +54,7 @@ export default function Router() {
           </PrivateRoute>
         }
       >
-        {/* Par défaut -> /users/:id/home */}
         <Route index element={<Navigate to="home" replace />} />
-
-        {/* Pages utilisateur */}
         <Route path="home" element={<HomePage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/:id" element={<ProductDetailPage />} />
@@ -56,6 +62,7 @@ export default function Router() {
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="account" element={<AccountPage />} />
         <Route path="orders" element={<OrdersPage />} />
+        <Route path="reviews" element={<ReviewsPage />} />
 
         {/* Admin */}
         <Route
@@ -73,8 +80,8 @@ export default function Router() {
         </Route>
       </Route>
 
-      {/* 404 -> /login */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      {/* 404 */}
+      <Route path="*" element={<Navigate to="/products" replace />} />
     </Routes>
   );
 }

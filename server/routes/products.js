@@ -9,14 +9,24 @@ import {
   updateProduct,
   deleteProduct,
 } from "../models/productModel.js";
+import { addManySizes } from "../models/productSizeModel.js"; // ⬅️ IMPORTANT
 
 const router = Router();
 const isInt = (v) => /^\d+$/.test(String(v));
 
+/** Tailles par défaut */
+const DEFAULT_SIZES = [
+  { label: "EU 40", stock: 10 },
+  { label: "EU 41", stock: 10 },
+  { label: "EU 42", stock: 10 },
+  { label: "EU 43", stock: 10 },
+  { label: "EU 44", stock: 10 },
+  { label: "EU 45", stock: 10 },
+];
+
 /**
  * @desc Liste des produits (public)
- * @route GET /products
- * @query search, brand, is_limited, minPrice, maxPrice, limit, offset, sort(newest|price_asc|price_desc)
+ * ...
  */
 router.get("/", async (req, res) => {
   try {
@@ -50,8 +60,8 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * @desc Détail d’un produit (public)
- * @route GET /products/:id
+ * @desc Détail produit (public)
+ * ...
  */
 router.get("/:id", async (req, res) => {
   const id = req.params.id;
@@ -66,18 +76,35 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+
 /**
  * @desc Créer un produit (admin)
  * @route POST /products
- * @access Admin
- * body: { name, brand?, description?, price, is_limited?, images?: string[], sizes?: [{label, stock}] }
+ * body: { name, brand?, description?, price, is_limited?, url?, images?: string[], sizes?: (string|{label,stock})[] }
  */
 router.post("/", auth, adminOnly, async (req, res) => {
   try {
-    const { name, brand = null, description = "", price, is_limited = false, images = [], sizes = [] } = req.body || {};
+    let {
+      name,
+      brand = null,
+      description = "",
+      price,
+      is_limited = false,
+      url,                 // ex: "/img/shoes/3.jpg"
+      images = [],         // si vide, on dérive depuis url
+      sizes,               // si vide/absent => DEFAULT_SIZES
+    } = req.body || {};
+
     if (!name || price === undefined) {
       return res.status(400).json({ message: "name and price are required" });
     }
+
+    // Map simple: si url fourni et pas d'images => images = [url]
+    if ((!Array.isArray(images) || images.length === 0) && typeof url === "string" && url.trim()) {
+      images = [url.trim()];
+    }
+
+    // 1) Création du produit (sans tailles)
     const created = await createProduct({
       name,
       brand,
@@ -85,21 +112,32 @@ router.post("/", auth, adminOnly, async (req, res) => {
       price: Number(price),
       is_limited: !!is_limited,
       images: Array.isArray(images) ? images : [],
-      sizes: Array.isArray(sizes) ? sizes : [],
     });
-    res.status(201).json({ message: "Product created", data: created });
+
+    const productId = created.id;
+
+    // 2) Ajout des tailles :
+    //    - si `sizes` absent/vides -> DEFAULT_SIZES
+    //    - supporte formats: ["EU 42", ...] ou [{label, stock}, ...]
+    let sizesToInsert = [];
+    if (Array.isArray(sizes) && sizes.length) {
+      sizesToInsert = sizes;
+    } else {
+      sizesToInsert = DEFAULT_SIZES;
+    }
+
+    await addManySizes(productId, sizesToInsert); // ⬅️ AJOUT EFFECTIF
+
+    return res.status(201).json({ message: "Product created", data: { id: productId } });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: "An error occurred while creating the product" });
+    console.error("Create product failed:", e);
+    return res.status(500).json({ message: "An error occurred while creating the product" });
   }
 });
 
 /**
- * @desc Mettre à jour un produit (admin) — champs de base uniquement
- * @route PUT /products/:id
- * @access Admin
- * body: { name?, brand?, description?, price?, is_limited? }
- * (Pour gérer images/tailles, on peut exposer des endpoints dédiés si besoin)
+ * @desc Mettre à jour un produit (admin)
+ * ...
  */
 router.put("/:id", auth, adminOnly, async (req, res) => {
   const id = req.params.id;
@@ -126,8 +164,7 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
 
 /**
  * @desc Supprimer un produit (admin)
- * @route DELETE /products/:id
- * @access Admin
+ * ...
  */
 router.delete("/:id", auth, adminOnly, async (req, res) => {
   const id = req.params.id;

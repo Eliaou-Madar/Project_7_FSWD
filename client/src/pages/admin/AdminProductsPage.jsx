@@ -162,9 +162,7 @@ export default function AdminProductsPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <button type="submit" className="btn">
-            Search
-          </button>
+          <button type="submit" className="btn">Search</button>
         </form>
         <button className="btn btn-primary" onClick={() => setCreating(true)}>
           + New product
@@ -175,7 +173,7 @@ export default function AdminProductsPage() {
         <div className="panel" style={{ marginTop: 12 }}>
           <ProductForm
             onCancel={() => setCreating(false)}
-            onSubmit={(formData) => onCreate(formData)}
+            onSubmit={(fd) => onCreate(fd)}
           />
         </div>
       )}
@@ -184,8 +182,8 @@ export default function AdminProductsPage() {
           <ProductForm
             initialValues={editing}
             onCancel={() => setEditing(null)}
-            onSubmit={(formData) =>
-              onUpdate(editing.id ?? editing.product_id ?? editing._id, formData)
+            onSubmit={(fd) =>
+              onUpdate(editing.id ?? editing.product_id ?? editing._id, fd)
             }
           />
         </div>
@@ -205,14 +203,12 @@ export default function AdminProductsPage() {
                 <div>
                   <div className="product-title">{p.name}</div>
                   <div className="product-meta">
-                    {p.price} € {p.sku ? `· SKU: ${p.sku}` : ""}
+                    {p.brand ? `${p.brand} · ` : ""}{p.price} €
+                    {p.sku ? ` · SKU: ${p.sku}` : ""} {p.is_limited ? " · Limited" : ""}
                   </div>
                 </div>
                 <div className="actions">
-                  <button
-                    className="btn"
-                    onClick={() => setEditing({ ...p, id })}
-                  >
+                  <button className="btn" onClick={() => setEditing({ ...p, id })}>
                     Edit
                   </button>
                   <button className="btn btn-danger" onClick={() => onDelete(id)}>
